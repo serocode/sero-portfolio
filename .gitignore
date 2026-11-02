@@ -1,0 +1,49 @@
+# ── Starter-kit scaffolding (build instructions, not part of the site) ──
+prompts/
+dark-mode-and-logo/
+# Kit README describes the starter kit, not the site. Remove this line once
+# you write a real project README.
+/README.md
+
+# ── Dependencies ──
+node_modules/
+
+# ── SvelteKit / Vite build output ──
+.svelte-kit/
+/build/
+/.output/
+/package/
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# ── Vercel ──
+.vercel/
+
+# ── Environment ──
+.env
+.env.*
+!.env.example
+!.env.test
+
+# ── Logs & tooling caches ──
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.eslintcache
+.lighthouseci/
+
+# ── Local agent / editor settings ──
+.claude/settings.local.json
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# ── OS junk ──
+.DS_Store
+Thumbs.db
+
+# ── Playwright ──
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

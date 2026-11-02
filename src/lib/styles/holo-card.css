@@ -1,0 +1,79 @@
+/*
+ * Holographic flip card (About section) — classes from the approved design.
+ * Structure:
+ *   .holo-tilt  (use:holoTilt — receives --bg-x / --bg-y / --holo-o and the tilt transform)
+ *     button    (toggles flipped; aria-pressed)
+ *       .holo-inner  (rotateY(180deg) when flipped)
+ *         .holo-face            front: photo, "No. 001", PH pill, "Flip for more", name strip
+ *           .holo-sheen + .holo-glare
+ *         .holo-face.holo-back  back (dark): By role / By practice / Credentials / Flip back
+ *           .holo-sheen.holo-sheen-dark + .holo-glare
+ */
+.holo-tilt {
+	--bg-x: 50%;
+	--bg-y: 50%;
+	--holo-o: 0;
+	transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+	will-change: transform;
+}
+.holo-inner {
+	position: relative;
+	display: block;
+	transform-style: preserve-3d;
+	transition: transform 0.8s cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+.holo-inner.is-flipped {
+	transform: rotateY(180deg);
+}
+.holo-face {
+	position: absolute;
+	inset: 0;
+	box-sizing: border-box;
+	border-radius: 22px;
+	overflow: hidden;
+	backface-visibility: hidden;
+	-webkit-backface-visibility: hidden;
+}
+.holo-back {
+	transform: rotateY(180deg);
+}
+.holo-sheen {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	mix-blend-mode: color-dodge;
+	background-image: repeating-linear-gradient(
+		110deg,
+		#ffb38a 0%,
+		#ffe9a8 7%,
+		#ffc2d1 14%,
+		#d9ccff 21%,
+		#ffb38a 28%
+	);
+	background-size: 240% 240%;
+	background-position: var(--bg-x) var(--bg-y);
+	opacity: calc(0.22 + 0.5 * var(--holo-o));
+	transition: opacity 0.35s ease;
+}
+.holo-sheen-dark {
+	mix-blend-mode: screen;
+	opacity: calc(0.06 + 0.16 * var(--holo-o));
+}
+.holo-glare {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background: radial-gradient(
+		circle at var(--bg-x) var(--bg-y),
+		rgba(255, 255, 255, 0.6),
+		rgba(255, 255, 255, 0) 48%
+	);
+	mix-blend-mode: overlay;
+	opacity: var(--holo-o);
+	transition: opacity 0.35s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+	.holo-inner {
+		transition: none;
+	}
+}

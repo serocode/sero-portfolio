@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Portfolio — mobile hero</title>
+<script src="./support.js"></script>
+<script src="/_blob/ef69d376508b60e3a4fc9c0bb8fd3442"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;family=Schibsted+Grotesk:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#ffffff}
+a{color:#c2410c;text-decoration:none}
+a:hover{color:#9a3412}
+a:focus-visible,button:focus-visible{outline:2px solid #ea580c;outline-offset:3px;border-radius:4px}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #ffffff; color: #4b5561; font-family: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif; font-size: 16px; line-height: 1.65">
+
+<header style="position: relative; z-index: 3; height: 64px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eef0f3; background: rgba(255,255,255,.86); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px)">
+<a href="#" aria-label="Anthony Serojales — home" style="display: flex; align-items: center; gap: 10px; color: #0d1117">
+<span aria-hidden="true" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #0d1117; border-radius: 9px; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; font-weight: 500; color: #ffffff">AS</span>
+<span style="font-size: 15px; font-weight: 600">Anthony Serojales</span>
+</a>
+<button type="button" aria-label="{{menuLabel}}" aria-expanded="{{open}}" onClick="{{toggle}}" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: #ffffff; border: 1px solid #e3e6ea; border-radius: 12px; color: #0d1117; cursor: pointer">
+<sc-if value="{{open}}" hint-placeholder-val="{{ false }}">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+</sc-if>
+<sc-if value="{{closed}}" hint-placeholder-val="{{ true }}">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="14" y2="17"></line></svg>
+</sc-if>
+</button>
+</header>
+
+<main style="display: flex; flex-direction: column">
+<figure style="margin: 0; height: 270px; position: relative">
+<canvas id="hero-gl-m" aria-hidden="true" style="display: block; width: 100%; height: 100%"></canvas>
+</figure>
+<div style="padding: 0 20px 32px; display: flex; flex-direction: column; gap: 20px">
+<p style="margin: 0; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; color: #c2410c">Hi, my name is</p>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-size: 42px; font-weight: 700; line-height: 1; letter-spacing: -0.045em; color: #0d1117">Anthony Serojales.</h1>
+<p style="margin: 0; font-size: 28px; font-weight: 600; line-height: 1.1; letter-spacing: -0.035em; color: #7d8690">Building thoughtful <span style="color: #ea580c">digital experiences.</span></p>
+</div>
+<p style="margin: 0; font-size: 15px; line-height: 1.65">I'm a software developer with experience building full-stack applications, designing scalable systems, and developing practical solutions to real-world problems.</p>
+<div style="display: flex; gap: 10px">
+<a href="#" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; background: #0d1117; border-radius: 999px; font-size: 15px; font-weight: 500; color: #ffffff">Get in touch</a>
+<a href="#" style="flex: 0 0 auto; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 0 20px; border: 1px solid #d5d9df; border-radius: 999px; font-size: 15px; font-weight: 500; color: #2c333b">Résumé</a>
+</div>
+</div>
+</main>
+
+<sc-if value="{{open}}" hint-placeholder-val="{{ false }}">
+<nav aria-label="Primary" style="position: absolute; z-index: 2; top: 64px; left: 0; right: 0; bottom: 0; background: #ffffff; padding: 8px 20px 28px; display: flex; flex-direction: column">
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="5">
+<li>
+<a href="#" onClick="{{item.pick}}" style="display: flex; align-items: baseline; gap: 14px; min-height: 60px; padding: 16px 0; border-bottom: 1px solid #eef0f3; font-size: 26px; font-weight: 600; letter-spacing: -0.02em; color: {{item.color}}">
+<span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; font-weight: 400; letter-spacing: 0; color: #c2410c">{{item.n}}</span>
+<span>{{item.label}}</span>
+</a>
+</li>
+</sc-for>
+</ol>
+<a href="#" style="margin-top: 28px; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; background: #0d1117; border-radius: 999px; font-size: 15px; font-weight: 500; color: #ffffff">
+<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+<span>Download résumé</span>
+</a>
+<div style="margin-top: auto; display: flex; align-items: center; justify-content: space-between">
+<p style="margin: 0; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; color: #68727e">Philippines</p>
+<div style="display: flex; gap: 2px">
+<a href="https://github.com/serocode" target="_blank" rel="noopener noreferrer" aria-label="GitHub" style="display: flex; width: 44px; height: 44px; align-items: center; justify-content: center; color: #4b5561"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a>
+<a href="#" aria-label="Facebook" style="display: flex; width: 44px; height: 44px; align-items: center; justify-content: center; color: #4b5561"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>
+<a href="#" aria-label="Discord" style="display: flex; width: 44px; height: 44px; align-items: center; justify-content: center; color: #4b5561"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.028C.533 9.046-.32 13.58.099 18.058a.082.082 0 0 0 .031.056 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.873-1.295 1.226-1.994a.076.076 0 0 0-.042-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.099.246.198.373.292a.077.077 0 0 1-.007.128 12.3 12.3 0 0 1-1.873.891.077.077 0 0 0-.041.107c.36.698.772 1.363 1.225 1.993a.076.076 0 0 0 .084.029 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"></path></svg></a>
+</div>
+</div>
+</nav>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  componentDidMount() {
+    var self = this, tries = 0;
+    var startGL = function () {
+      var cv = document.getElementById('hero-gl-m');
+      if (!cv || !window.THREE) { if (tries++ < 40) self._t = setTimeout(startGL, 150); return; }
+      try { self._gl = self.buildScene(cv); } catch (err) {}
+    };
+    startGL();
+  }
+  componentWillUnmount() {
+    if (this._t) clearTimeout(this._t);
+    if (this._gl) this._gl.dispose();
+  }
+  buildScene(cv) {
+    var T = window.THREE;
+    var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var renderer = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setClearColor(0xffffff, 0);
+    var scene = new T.Scene();
+    var camera = new T.PerspectiveCamera(35, 1, 0.1, 100);
+    camera.position.set(0, 0, 7.6);
+    var group = new T.Group();
+    scene.add(group);
+    var N = 3000;
+    var pos = new Float32Array(N * 3), seed = new Float32Array(N);
+    var golden = Math.PI * (3 - Math.sqrt(5));
+    for (var i = 0; i < N; i++) {
+      var y = 1 - (i / (N - 1)) * 2, r = Math.sqrt(1 - y * y), th = golden * i;
+      pos[i * 3] = Math.cos(th) * r; pos[i * 3 + 1] = y; pos[i * 3 + 2] = Math.sin(th) * r;
+      seed[i] = Math.random();
+    }
+    var geo = new T.BufferGeometry();
+    geo.setAttribute('position', new T.BufferAttribute(pos, 3));
+    geo.setAttribute('aSeed', new T.BufferAttribute(seed, 1));
+    var uniforms = {
+      uTime: { value: 0 }, uPR: { value: renderer.getPixelRatio() }, uCam: { value: 7.6 },
+      uA: { value: new T.Color('#f97316') }, uB: { value: new T.Color('#b4bcc6') }, uC: { value: new T.Color('#ea580c') }
+    };
+    var mat = new T.ShaderMaterial({
+      uniforms: uniforms, transparent: true, depthWrite: false,
+      vertexShader: [
+        'uniform float uTime; uniform float uPR; uniform float uCam;',
+        'attribute float aSeed;',
+        'varying float vMix; varying float vFade;',
+        'void main() {',
+        '  vec3 p = position;',
+        '  float d = sin(3.1 * p.x + uTime * 0.9) * sin(2.7 * p.y + uTime * 1.1) * sin(3.3 * p.z + uTime * 0.7);',
+        '  d += 0.5 * sin(6.0 * p.y - uTime * 1.4 + p.x * 2.0);',
+        '  vec3 q = p * (1.65 + 0.16 * d);',
+        '  vec4 mv = modelViewMatrix * vec4(q, 1.0);',
+        '  gl_Position = projectionMatrix * mv;',
+        '  vMix = clamp(0.45 + d * 0.9 + p.y * 0.2, 0.0, 1.0);',
+        '  gl_PointSize = (2.2 + 2.6 * aSeed * aSeed) * (1.0 + 0.45 * smoothstep(0.6, 0.85, vMix)) * uPR * (7.0 / -mv.z);',
+        '  vFade = clamp((mv.z + uCam + 1.8) / 3.5, 0.22, 1.0);',
+        '}'
+      ].join('\n'),
+      fragmentShader: [
+        'uniform vec3 uA; uniform vec3 uB; uniform vec3 uC;',
+        'varying float vMix; varying float vFade;',
+        'void main() {',
+        '  float r = length(gl_PointCoord - 0.5);',
+        '  if (r > 0.5) discard;',
+        '  float a = smoothstep(0.5, 0.32, r) * vFade;',
+        '  vec3 c = mix(uB, uA, smoothstep(0.58, 0.72, vMix));',
+        '  c = mix(c, uC, smoothstep(0.93, 1.0, vMix));',
+        '  gl_FragColor = vec4(c, a);',
+        '  #include <colorspace_fragment>',
+        '}'
+      ].join('\n')
+    });
+    group.add(new T.Points(geo, mat));
+    var M = 360, rp = new Float32Array(M * 3);
+    for (var j = 0; j < M; j++) {
+      var ang = (j / M) * Math.PI * 2;
+      rp[j * 3] = Math.cos(ang) * 2.25; rp[j * 3 + 1] = 0; rp[j * 3 + 2] = Math.sin(ang) * 2.25;
+    }
+    var rg = new T.BufferGeometry();
+    rg.setAttribute('position', new T.BufferAttribute(rp, 3));
+    var rm = new T.PointsMaterial({ color: 0x9aa3ad, size: 0.022, sizeAttenuation: true, transparent: true, opacity: 0.85, depthWrite: false });
+    var ring = new T.Points(rg, rm);
+    ring.rotation.x = 1.15; ring.rotation.z = -0.35;
+    group.add(ring);
+    var TR = 32, tp = new Float32Array(TR * 3), tt = new Float32Array(TR);
+    for (var k = 0; k < TR; k++) tt[k] = k / (TR - 1);
+    var sg = new T.BufferGeometry();
+    sg.setAttribute('position', new T.BufferAttribute(tp, 3));
+    sg.setAttribute('aT', new T.BufferAttribute(tt, 1));
+    var sm = new T.ShaderMaterial({
+      uniforms: { uPR: uniforms.uPR, uCol: { value: new T.Color('#f97316') } },
+      transparent: true, depthWrite: false, depthTest: false,
+      vertexShader: [
+        'uniform float uPR;',
+        'attribute float aT;',
+        'varying float vT;',
+        'void main() {',
+        '  vT = aT;',
+        '  vec4 mv = modelViewMatrix * vec4(position, 1.0);',
+        '  gl_Position = projectionMatrix * mv;',
+        '  float head = step(0.999, aT);',
+        '  gl_PointSize = mix(2.0 + 6.0 * aT, 30.0, head) * uPR * (7.6 / -mv.z);',
+        '}'
+      ].join('\n'),
+      fragmentShader: [
+        'uniform vec3 uCol;',
+        'varying float vT;',
+        'void main() {',
+        '  float r = length(gl_PointCoord - 0.5);',
+        '  if (r > 0.5) discard;',
+        '  float head = step(0.999, vT);',
+        '  float core = smoothstep(0.17, 0.11, r);',
+        '  float halo = exp(-r * r * 20.0) * 0.5;',
+        '  float a = mix(smoothstep(0.5, 0.2, r) * vT * 0.9, max(core, halo), head);',
+        '  gl_FragColor = vec4(uCol, a);',
+        '  #include <colorspace_fragment>',
+        '}'
+      ].join('\n')
+    });
+    var sat = new T.Points(sg, sm);
+    sat.frustumCulled = false;
+    sat.renderOrder = 5;
+    ring.add(sat);
+    var fit = function () {
+      var w = cv.clientWidth, h = cv.clientHeight;
+      if (!w || !h) return;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+    fit();
+    var spin = 0, raf = 0;
+    var place = function (t) {
+      for (var q = 0; q < TR; q++) {
+        var a = t * 0.55 - (1 - tt[q]) * 1.1;
+        tp[q * 3] = Math.cos(a) * 2.25; tp[q * 3 + 1] = 0; tp[q * 3 + 2] = Math.sin(a) * 2.25;
+      }
+      sg.attributes.position.needsUpdate = true;
+    };
+    var clock = new T.Clock();
+    var frame = function () {
+      var dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+      uniforms.uTime.value = t;
+      spin += dt * 0.14;
+      group.rotation.y = spin;
+      group.rotation.x = 0.18 + Math.sin(t * 0.3) * 0.06;
+      place(t);
+      renderer.render(scene, camera);
+      raf = requestAnimationFrame(frame);
+    };
+    var ro = null;
+    if ('ResizeObserver' in window) { ro = new ResizeObserver(function () { fit(); if (reduce) renderer.render(scene, camera); }); ro.observe(cv); }
+    if (reduce) { uniforms.uTime.value = 1.6; group.rotation.set(0.18, 0.6, 0); place(1.6); renderer.render(scene, camera); }
+    else { raf = requestAnimationFrame(frame); }
+    return {
+      dispose: function () {
+        cancelAnimationFrame(raf);
+        if (ro) ro.disconnect();
+        geo.dispose(); mat.dispose(); rg.dispose(); rm.dispose(); sg.dispose(); sm.dispose();
+        renderer.dispose();
+      }
+    };
+  }
+  renderVals() {
+    var st = this.state || {};
+    var open = !!st.menu;
+    var active = st.active || '';
+    var self = this;
+    var defs = [['about', '01', 'About'], ['approach', '02', 'Approach'], ['projects', '03', 'Projects'], ['skills', '04', 'Skills'], ['contact', '05', 'Contact']];
+    return {
+      open: open,
+      closed: !open,
+      menuLabel: open ? 'Close menu' : 'Open menu',
+      toggle: function () { self.setState({ menu: !open }); },
+      nav: defs.map(function (d) {
+        return {
+          n: d[1],
+          label: d[2],
+          color: d[0] === active ? '#c2410c' : '#0d1117',
+          pick: function (e) { if (e && e.preventDefault) e.preventDefault(); self.setState({ active: d[0], menu: false }); }
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>
