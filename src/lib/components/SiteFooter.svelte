@@ -54,6 +54,8 @@
 <style>
 	footer {
 		border-top: 1px solid var(--color-line);
+		/* Last snap point: the page's bottom edge, so the footer is reachable under mandatory snapping. */
+		scroll-snap-align: end;
 	}
 	.row {
 		display: flex;

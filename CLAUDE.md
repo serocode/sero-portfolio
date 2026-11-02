@@ -55,6 +55,11 @@ SvelteKit, not to redesign it.
 
 - Content column: `max-width: 1320px; margin: 0 auto; padding-inline: clamp(20px, 5vw, 48px)` (widened from the design's 1120px at Anthony's request).
 - Section padding: `clamp(40px, 5vw, 68px)` top/bottom (halved from the design's `clamp(80px, 10vw, 136px)` at Anthony's request).
+- Full-screen sections: every `main > section` is at least `100svh` minus the 65px sticky header
+  (`--header-h`), content centred vertically, growing when it needs more. The document snaps
+  (`scroll-snap-type: y mandatory` on `html`, `proximity` with reduced motion); each section snaps
+  `start`, the footer snaps `end`, and `scroll-padding-top: var(--header-h)` keeps snaps and anchor
+  jumps exactly under the header. Don't add nested scroll containers or fixed section heights.
 - Section label row: mono number in `accent-700` (13px) · uppercase mono label in `muted`
   (12px, 0.14em tracking) · a 240px rule with a 28px accent segment on a 1px `line`.
 - h2: `clamp(30px, 4.2vw, 48px)`, weight 600, line-height 1.08, letter-spacing −0.035em, `ink`.

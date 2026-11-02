@@ -357,3 +357,56 @@ test('axe: no accessibility violations in dark theme (default + filtered + flipp
 	expect(await run()).toEqual([]);
 	await context.close();
 });
+
+test('full-screen sections snap under the header; tall sections scroll freely; footer reachable', async ({
+	page,
+	isMobile
+}) => {
+	await page.goto('/');
+	expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe(
+		'y mandatory'
+	);
+	const { min, heights } = await page.evaluate(() => ({
+		min: innerHeight - 65,
+		heights: [...document.querySelectorAll('main > section')].map(
+			(s) => s.getBoundingClientRect().height
+		)
+	}));
+	for (const h of heights) expect(h).toBeGreaterThanOrEqual(min - 1);
+
+	const settle = async () => {
+		let last = -1;
+		for (let i = 0; i < 30; i++) {
+			const y = await page.evaluate(() => scrollY);
+			if (Math.abs(y - last) < 0.5) break;
+			last = y;
+			await page.waitForTimeout(100);
+		}
+		return page.evaluate(() => scrollY);
+	};
+	if (!isMobile) {
+		// Keyboard paging lands exactly on the next section, under the 65px header.
+		await page.keyboard.press('PageDown');
+		await settle();
+		expect(
+			Math.round(await page.locator('#about').evaluate((el) => el.getBoundingClientRect().top))
+		).toBe(65);
+	}
+	// Inside the (taller than the screen) Projects deck, the page can rest mid-section.
+	const mid = await page
+		.locator('#projects')
+		.evaluate(
+			(el) => el.getBoundingClientRect().top + scrollY + el.getBoundingClientRect().height * 0.4
+		);
+	await page.evaluate((y) => {
+		document.documentElement.style.scrollBehavior = 'auto';
+		window.scrollTo(0, y);
+	}, mid);
+	expect(Math.abs((await settle()) - mid)).toBeLessThan(2);
+	// The bottom of the page (footer) is a snap point too.
+	await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+	await settle();
+	expect(
+		await page.evaluate(() => document.querySelector('footer')?.getBoundingClientRect().bottom ?? 0)
+	).toBeLessThanOrEqual(await page.evaluate(() => innerHeight + 1));
+});

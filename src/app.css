@@ -45,9 +45,17 @@
 
 /* Element defaults live in the base layer so Tailwind utilities can override them. */
 @layer base {
+	:root {
+		/* Sticky header: 64px bar + 1px border. Sizes the snap offset and the full-screen sections. */
+		--header-h: 65px;
+	}
+	/* The document is the one scroll container: it snaps each section's top to just under the
+	   sticky header. Sections taller than the screen (Projects deck, Skills) scroll freely inside
+	   — browsers only snap at their edges — so nothing is ever out of reach. */
 	html {
 		scroll-behavior: smooth;
-		scroll-padding-top: 88px;
+		scroll-padding-top: var(--header-h);
+		scroll-snap-type: y mandatory;
 	}
 	body {
 		margin: 0;
@@ -130,8 +138,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+	/* No smooth scrolling, and snapping only when you stop close to a section (no forced pulls). */
 	html {
 		scroll-behavior: auto;
+		scroll-snap-type: y proximity;
 	}
 	.rise,
 	.rise-lcp,
@@ -147,6 +157,20 @@
 
 /* ── Layout + shared interaction styles (values from reference/design-source/Main.dc.html) ── */
 @layer components {
+	/* Full-screen sections: at least the screen below the header (svh: stable while mobile
+	   toolbars collapse), content centred vertically, and free to grow when it needs more room. */
+	main > section {
+		min-height: calc(100svh - var(--header-h));
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		scroll-snap-align: start;
+	}
+	/* A flex column would shrink-wrap the centred column; keep it full width. */
+	main > section > .wrap {
+		width: 100%;
+	}
+
 	.wrap {
 		max-width: 1320px;
 		margin-inline: auto;
