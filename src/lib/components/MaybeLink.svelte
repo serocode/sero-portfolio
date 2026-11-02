@@ -51,7 +51,7 @@
 {:else}
 	<button
 		type="button"
-		class={cls}
+		class="cursor-not-allowed {cls}"
 		aria-disabled="true"
 		title={comingSoon}
 		aria-label={label ? `${label} — ${comingSoon.toLowerCase()}` : undefined}

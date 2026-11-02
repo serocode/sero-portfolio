@@ -24,7 +24,7 @@
 </script>
 
 <svg
-	class="logo"
+	class="block flex-none"
 	viewBox={g.viewBox}
 	{width}
 	height={size}
@@ -46,10 +46,3 @@
 	{/if}
 	<circle cx={g.dot.cx} cy={g.dot.cy} r={g.dot.r} style="fill: var(--color-accent)" />
 </svg>
-
-<style>
-	.logo {
-		display: block;
-		flex: none;
-	}
-</style>

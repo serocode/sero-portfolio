@@ -3,6 +3,12 @@ import { expect, type Page, test } from '@playwright/test';
 
 const sections = ['about', 'approach', 'projects', 'skills', 'contact'];
 
+/** The intro loader plays once per session; these tests exercise the page itself, so skip it. */
+const skipIntro = () => sessionStorage.setItem('intro-seen', '1');
+test.beforeEach(async ({ context }) => {
+	await context.addInitScript(skipIntro);
+});
+
 /** Collects console errors + uncaught exceptions for the whole test. */
 function trackErrors(page: Page) {
 	const errors: string[] = [];
@@ -144,7 +150,7 @@ test('hero: intro sits on two lines on a large desktop; surname carries the acce
 	const lines = await page
 		.locator('main > section')
 		.first()
-		.locator('p.d3')
+		.locator('p.hero-intro')
 		.evaluate((el) =>
 			Math.round(
 				el.getBoundingClientRect().height / Number.parseFloat(getComputedStyle(el).lineHeight)
@@ -318,6 +324,7 @@ test('dark theme: follows the OS before first paint, toggles, and remembers the 
 	browser
 }) => {
 	const context = await browser.newContext({ colorScheme: 'dark' });
+	await context.addInitScript(skipIntro);
 	const page = await context.newPage();
 	await page.goto('/');
 	const root = page.locator('html');
@@ -343,6 +350,7 @@ test('axe: no accessibility violations in dark theme (default + filtered + flipp
 		colorScheme: 'dark',
 		viewport: { width: 1440, height: 900 }
 	});
+	await context.addInitScript(skipIntro);
 	const page = await context.newPage();
 	await page.goto('/');
 	await page.waitForTimeout(1200);
@@ -356,4 +364,159 @@ test('axe: no accessibility violations in dark theme (default + filtered + flipp
 	await page.waitForTimeout(1000);
 	expect(await run()).toEqual([]);
 	await context.close();
+});
+
+test('full-screen sections snap under the header; tall sections scroll freely; footer reachable', async ({
+	page,
+	isMobile
+}) => {
+	await page.goto('/');
+	expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe(
+		'y mandatory'
+	);
+	const { min, heights } = await page.evaluate(() => ({
+		min: innerHeight - 65,
+		heights: [...document.querySelectorAll('main > section')].map(
+			(s) => s.getBoundingClientRect().height
+		)
+	}));
+	for (const h of heights) expect(h).toBeGreaterThanOrEqual(min - 1);
+
+	const settle = async () => {
+		let last = -1;
+		for (let i = 0; i < 30; i++) {
+			const y = await page.evaluate(() => scrollY);
+			if (Math.abs(y - last) < 0.5) break;
+			last = y;
+			await page.waitForTimeout(100);
+		}
+		return page.evaluate(() => scrollY);
+	};
+	if (!isMobile) {
+		// Keyboard paging lands exactly on the next section, under the 65px header.
+		await page.keyboard.press('PageDown');
+		// Poll: the smooth scroll can start a beat after the key press when the machine is busy.
+		await expect
+			.poll(() =>
+				page.locator('#about').evaluate((el) => Math.round(el.getBoundingClientRect().top))
+			)
+			.toBe(65);
+	}
+	// Inside the (taller than the screen) Projects deck, the page can rest mid-section.
+	const mid = await page
+		.locator('#projects')
+		.evaluate(
+			(el) => el.getBoundingClientRect().top + scrollY + el.getBoundingClientRect().height * 0.4
+		);
+	await page.evaluate((y) => {
+		document.documentElement.style.scrollBehavior = 'auto';
+		window.scrollTo(0, y);
+	}, mid);
+	expect(Math.abs((await settle()) - mid)).toBeLessThan(2);
+	// The bottom of the page (footer) is a snap point too.
+	await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+	await settle();
+	expect(
+		await page.evaluate(() => document.querySelector('footer')?.getBoundingClientRect().bottom ?? 0)
+	).toBeLessThanOrEqual(await page.evaluate(() => innerHeight + 1));
+});
+
+test('intro loader: covers the first load of a session, locks scroll, lifts within 3s, then never again', async ({
+	browser
+}) => {
+	const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+	const page = await context.newPage();
+	await page.goto('/', { waitUntil: 'domcontentloaded' });
+	const root = page.locator('html');
+	await expect(root).toHaveAttribute('data-loader', 'on');
+	await expect(page.getByRole('status').filter({ hasText: 'Loading' })).toBeAttached();
+	await expect(page.locator('h1')).toBeAttached(); // the page is rendered underneath
+	await page.mouse.wheel(0, 500);
+	expect(await page.evaluate(() => scrollY)).toBe(0); // locked while up
+	await expect(root).not.toHaveAttribute('data-loader', /.+/, { timeout: 3500 });
+	await expect(page.locator('.ld')).toHaveCount(0, { timeout: 2000 });
+	await page.reload({ waitUntil: 'domcontentloaded' });
+	await expect(root).not.toHaveAttribute('data-loader', /.+/); // same tab: skipped
+	await context.close();
+});
+
+test('intro loader is skipped with reduced motion', async ({ browser }) => {
+	const context = await browser.newContext({ reducedMotion: 'reduce' });
+	const page = await context.newPage();
+	await page.goto('/', { waitUntil: 'domcontentloaded' });
+	await expect(page.locator('html')).not.toHaveAttribute('data-loader', /.+/);
+	await expect(page.locator('.ld')).toBeHidden();
+	await context.close();
+});
+
+test('failed images and a failed 3D scene fall back gracefully', async ({ page }) => {
+	await page.route(/\/images\/projects\//, (r) => r.abort());
+	// Built chunk names are hashes, so find the three.js chunk by its contents and block it.
+	await page.route(/\.js(\?|$)/, async (route) => {
+		const response = await route.fetch();
+		const body = await response.text();
+		if (body.includes('WebGLRenderer')) await route.abort();
+		else await route.fulfill({ response, body });
+	});
+	await page.goto('/');
+	await expect(page.locator('.scene-skel')).toHaveAttribute('data-state', 'failed', {
+		timeout: 8000
+	});
+	const shot = page.locator('#projects .deck-card').first().locator('.screen img');
+	await shot.scrollIntoViewIfNeeded();
+	await expect(shot).toHaveAttribute('data-img', 'error');
+	await expect(shot).toHaveAttribute('alt', /.+/); // still described for screen readers
+	const label = await page
+		.locator('#projects .deck-card')
+		.first()
+		.locator('.screen')
+		.evaluate((el) => getComputedStyle(el, '::before').content);
+	expect(label).toContain('Screenshot unavailable');
+});
+
+test('next topic: the panel resizes over several frames and ends clean', async ({ page }) => {
+	await page.goto('/');
+	await page.evaluate(() => document.getElementById('approach')?.scrollIntoView());
+	const heights = page.evaluate(
+		() =>
+			new Promise<number[]>((resolve) => {
+				const panel = document.getElementById('ap-panel');
+				const xs: number[] = [];
+				const t0 = performance.now();
+				const tick = () => {
+					xs.push(Math.round(panel?.getBoundingClientRect().height ?? 0));
+					if (performance.now() - t0 < 800) requestAnimationFrame(tick);
+					else resolve(xs);
+				};
+				requestAnimationFrame(tick);
+			})
+	);
+	await page.getByRole('button', { name: 'Next topic' }).click();
+	const xs = await heights;
+	const distinct = new Set(xs).size;
+	if (xs[0] !== xs.at(-1)) expect(distinct).toBeGreaterThan(4); // glided, didn't snap
+	const stage = page.locator('#ap-panel [data-key]').locator('..');
+	await expect(stage).toHaveAttribute('style', /^$|^(?!.*height)/);
+	await expect(page.locator('#ap-panel [data-key]')).toHaveCount(1);
+	await expect(page.getByRole('tabpanel')).toContainText('I know the work behind the system.');
+});
+
+test('sections rise in on arrival; without JS nothing is hidden', async ({ page, browser }) => {
+	await page.goto('/');
+	const skills = page.locator('#skills');
+	await expect(skills).toHaveAttribute('data-reveal', 'out');
+	await skills.scrollIntoViewIfNeeded();
+	await expect(skills).toHaveAttribute('data-reveal', 'in');
+	await expect
+		.poll(() => page.locator('#skills-h').evaluate((el) => getComputedStyle(el).opacity))
+		.toBe('1');
+
+	const noJs = await browser.newContext({ javaScriptEnabled: false });
+	const p = await noJs.newPage();
+	await p.goto('/');
+	const opacities = await p
+		.locator('main > section h2')
+		.evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity));
+	expect(opacities.every((o) => o === '1')).toBe(true);
+	await noJs.close();
 });

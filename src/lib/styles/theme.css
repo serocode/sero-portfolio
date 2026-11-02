@@ -125,10 +125,7 @@
 	}
 }
 
-/* Dark-mode tweaks that aren't just colour swaps */
-:root[data-theme="dark"] .holo-sheen {
-	opacity: calc(0.07 + 0.3 * var(--holo-o));
-}
+/* Dark selection colour (an element default, like the light one in app.css's base layer). */
 :root[data-theme="dark"] ::selection {
 	background: rgba(249, 115, 22, 0.32);
 	color: #ffffff;

@@ -1,7 +1,11 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { fitSticky } from '$lib/actions/fit-sticky';
+	import { imageState } from '$lib/actions/image-state';
 	import { swipe } from '$lib/actions/swipe';
-	import type { Project } from '$lib/content/types';
+	import type { DiagramBox, Project } from '$lib/content/types';
+	import { HeightTween, swap } from '$lib/motion';
+	import { btnGhostHover, btnPrimaryHover, imgFade, imgFrame } from '$lib/ui';
 	import { pad2 } from '$lib/utils/format';
 	import Icon from './Icon.svelte';
 
@@ -9,6 +13,26 @@
 
 	// Each card switches its views and shots independently.
 	let viewIdx = $state(0);
+
+	// Switching views: direction-aware slide + a smooth height change (see src/lib/motion.ts).
+	let stage = $state<HTMLElement>();
+	const tween = new HeightTween();
+	$effect(() => tween.attach(stage));
+	let viewDir = $state<1 | -1>(1);
+	let lastView = 0;
+	$effect.pre(() => {
+		const v = viewIdx;
+		untrack(() => {
+			if (v === lastView) return;
+			viewDir = v > lastView ? 1 : -1;
+			lastView = v;
+			tween.lock();
+		});
+	});
+	$effect(() => {
+		const v = viewIdx;
+		untrack(() => tween.to(stage?.querySelector<HTMLElement>(`[data-key="${v}"]`)));
+	});
 	let shotIdx = $state<Record<number, number>>({});
 
 	const view = $derived(project.views[viewIdx]);
@@ -35,23 +59,58 @@
 		enabled: shots.length > 1
 	});
 
+	const caption = 'flex justify-between gap-3 font-mono text-[12px] leading-[1.5] text-muted';
+	/** Architecture diagram boxes: the highlighted layer, optional parts, and the data store. */
+	const boxKind: Record<DiagramBox['kind'], string> = {
+		plain: 'border border-line bg-surface',
+		key: 'border-[1.5px] border-accent bg-surface font-semibold text-ink',
+		soft: 'border border-dashed border-line-strong bg-surface',
+		data: 'border border-inverse bg-inverse font-medium text-on-inverse'
+	};
+
 	const alt = (caption: string) => `${project.title} — ${caption}`;
 	const isGithub = (href: string) => /^https?:\/\/(www\.)?github\.com\//.test(href);
 </script>
 
-<article class="deck-card" aria-labelledby="{project.id}-title" style:--i={index} use:fitSticky>
-	<div class="head">
-		<p class="meta mono">
-			<span><span class="idx">{pad2(index + 1)}</span> / {pad2(total)}</span>
-			<span class="kind">{project.kind}</span>
+<!--
+  Sticky deck card. Offset: a stair-step under the header (--deck-top: 88px + i×16px; ≤820px a
+  tighter 76px + i×10px), or — for a card taller than the viewport — bottom edge 24px above the fold
+  (--card-h from fit-sticky.ts). svh = small viewport, so the offset holds still while mobile
+  toolbars collapse. Reduced motion: a normal stack.
+-->
+<article
+	class="deck-card sticky top-[min(var(--deck-top),calc(100svh_-_var(--card-h,0px)_-_24px_-_env(safe-area-inset-bottom,0px)))] flex origin-top flex-col gap-[22px] rounded-[28px] border border-line bg-surface p-[clamp(20px,2.6vw,32px)] shadow-[0_1px_2px_rgb(var(--shadow-rgb)/calc(0.04*var(--shadow-k))),0_-18px_48px_-32px_rgb(var(--shadow-rgb)/calc(0.28*var(--shadow-k))),0_30px_60px_-40px_rgb(var(--shadow-rgb)/calc(0.35*var(--shadow-k)))] will-change-transform [--deck-top:calc(88px_+_var(--i,0)_*_16px)] max-desk:rounded-[22px] max-desk:[--deck-top:calc(76px_+_var(--i,0)_*_10px)] motion-reduce:relative! motion-reduce:top-auto!"
+	aria-labelledby="{project.id}-title"
+	style:--i={index}
+	use:fitSticky
+>
+	<div class="flex flex-wrap items-center justify-between gap-x-5 gap-y-2.5">
+		<p
+			class="flex flex-wrap items-baseline gap-x-3.5 gap-y-1.5 font-mono text-[12px] tracking-[0.06em] text-muted"
+		>
+			<span
+				><span class="text-[15px] font-medium text-accent-700">{pad2(index + 1)}</span>
+				/ {pad2(total)}</span
+			>
+			<span class="text-accent-700">{project.kind}</span>
 		</p>
-		<ul class="badges" aria-label="Status">
+		<ul class="flex flex-wrap gap-2" aria-label="Status">
 			{#each project.badges as b (b.label)}
-				<li class="badge mono {b.tone}">
+				<li
+					class={[
+						'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-[3px] font-mono text-[11px] leading-[1.5]',
+						b.tone === 'live'
+							? 'border-[rgba(249,115,22,0.25)] bg-[rgba(249,115,22,0.12)] text-accent-800'
+							: 'border-line bg-surface text-body'
+					]}
+				>
 					{#if b.tone === 'private'}
 						<Icon name="lock" size={11} strokeWidth={2} />
 					{:else}
-						<span class="dot" aria-hidden="true"></span>
+						<span
+							class={['size-1.5 rounded-full', b.tone === 'live' ? 'bg-accent' : 'bg-faint']}
+							aria-hidden="true"
+						></span>
 					{/if}
 					{b.label}
 				</li>
@@ -59,159 +118,248 @@
 		</ul>
 	</div>
 
-	<div class="body">
-		<figure class="media">
+	<!-- Media ~55% + text; stacked at ≤820px. -->
+	<div class="flex flex-wrap items-start gap-x-12 gap-y-7">
+		<figure class="flex min-w-0 flex-[1.35_1_440px] flex-col gap-3 max-desk:basis-full">
 			{#if project.views.length > 1}
-				<div class="seg" role="group" aria-label="{project.title} views">
+				<div
+					class="flex gap-1.5 self-start rounded-full bg-chip p-1"
+					role="group"
+					aria-label="{project.title} views"
+				>
 					{#each project.views as v, i (v.label)}
-						<button type="button" aria-pressed={viewIdx === i} onclick={() => (viewIdx = i)}>
+						<button
+							type="button"
+							class="min-h-9 rounded-full border-0 bg-transparent px-4 text-[13px] font-medium text-body [transition:background-color_0.2s_ease,box-shadow_0.2s_ease,color_0.2s_ease] aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:shadow-[0_1px_2px_rgb(var(--shadow-rgb)/calc(0.08*var(--shadow-k))),0_2px_8px_-4px_rgb(var(--shadow-rgb)/calc(0.15*var(--shadow-k)))]"
+							aria-pressed={viewIdx === i}
+							onclick={() => (viewIdx = i)}
+						>
 							{v.label}
 						</button>
 					{/each}
 				</div>
 			{/if}
 
-			{#if view.type === 'browser'}
-				{@const first = view.shots[0]}
-				<div class="browser-wrap" use:swipe={swipeShots}>
+			<!-- One grid cell: switching views cross-slides the media while the card glides to its new
+			     height (and, through fit-sticky, its new sticky position). -->
+			<div class="grid items-start [&>*]:[grid-area:1/1]" bind:this={stage}>
+				{#key viewIdx}
 					<div
-						class="browser"
-						style:aspect-ratio="{first.width} / {first.height + 36}"
-						style:background={view.background}
+						class="flex min-w-0 flex-col gap-3"
+						data-key={viewIdx}
+						in:swap={{ dir: viewDir }}
+						out:swap={{ dir: viewDir, out: true }}
 					>
-						<div class="chrome" aria-hidden="true">
-							<span class="light"></span><span class="light"></span><span class="light"></span>
-							<span class="address mono"
-								><span class="adot"></span>{view.addressBar}
-								· {shot.label}</span
-							>
-						</div>
-						<div class="screen">
-							<img
-								src={shot.src}
-								alt={alt(shot.caption)}
-								width={shot.width}
-								height={shot.height}
-								loading="lazy"
-								decoding="async"
-							>
-						</div>
-					</div>
-					{#if view.phoneOverlay}
-						<span class="overlay">
-							<img
-								src={view.phoneOverlay.src}
-								alt={view.phoneOverlay.alt}
-								width={view.phoneOverlay.width}
-								height={view.phoneOverlay.height}
-								loading="lazy"
-								decoding="async"
-							>
-						</span>
-					{/if}
-				</div>
-				<p class="caption mono">
-					<span>{shot.caption}</span
-					><span class="count">{pad2(shotI + 1)} / {pad2(shots.length)}</span>
-				</p>
-				{#if shots.length > 1}
-					<ul
-						class="thumbs"
-						style:--cols={Math.max(3, shots.length)}
-						aria-label="{project.title} screenshots"
-					>
-						{#each shots as s, i (s.src)}
-							<li>
-								<button
-									type="button"
-									class="thumb"
-									class:on={shotI === i}
-									aria-pressed={shotI === i}
-									aria-label="Show the {s.label} screenshot"
+						{#if view.type === 'browser'}
+							{@const first = view.shots[0]}
+							<div class="relative" use:swipe={swipeShots}>
+								<div
+									class="flex flex-col overflow-hidden rounded-2xl border border-line shadow-[0_24px_48px_-30px_rgb(var(--shadow-rgb)/calc(0.3*var(--shadow-k)))]"
+									style:aspect-ratio="{first.width} / {first.height + 36}"
 									style:background={view.background}
-									onclick={() => pickShot(i)}
-									onkeydown={onShotKeys}
 								>
-									<img
-										src={s.src}
-										alt=""
-										width={s.width}
-										height={s.height}
-										loading="lazy"
-										decoding="async"
+									<div
+										class="flex h-9 flex-none items-center gap-1.5 border-b border-line-soft bg-surface px-3.5"
+										aria-hidden="true"
 									>
-								</button>
-							</li>
-						{/each}
-					</ul>
-				{/if}
-			{:else if view.type === 'phones'}
-				<ul class="phones" aria-label="{project.title} screens" use:swipe={swipeShots}>
-					{#each shots as s, i (s.src)}
-						<li>
-							<button
-								type="button"
-								class="phone"
-								class:on={shotI === i}
-								aria-pressed={shotI === i}
-								aria-label="Show the {s.label} screen"
-								onclick={() => pickShot(i)}
-								onkeydown={onShotKeys}
-							>
-								<img
-									src={s.src}
-									alt={alt(s.caption)}
-									width={s.width}
-									height={s.height}
-									loading="lazy"
-									decoding="async"
+										<span class="size-[9px] flex-none rounded-full bg-line"></span
+										><span class="size-[9px] flex-none rounded-full bg-line"></span
+										><span class="size-[9px] flex-none rounded-full bg-line"></span>
+										<!-- mist, not chip: muted 10px text on chip would be 4.44:1 (under 4.5). -->
+										<span
+											class="ml-3 flex h-[22px] max-w-[300px] min-w-0 flex-1 items-center gap-2 overflow-hidden rounded-md bg-mist px-2.5 font-mono text-[10px] whitespace-nowrap text-muted"
+											><span class="size-1.5 flex-none rounded-full bg-accent"></span>
+											{view.addressBar}
+											· {shot.label}</span
+										>
+									</div>
+									<div
+										class="screen relative min-h-0 flex-1 {imgFrame}"
+										data-fallback="Screenshot unavailable"
+									>
+										<img
+											use:imageState
+											class="absolute inset-0 size-full object-cover object-top {imgFade}"
+											src={shot.src}
+											alt={alt(shot.caption)}
+											width={shot.width}
+											height={shot.height}
+											loading="lazy"
+											decoding="async"
+										>
+									</div>
+								</div>
+								{#if view.phoneOverlay}
+									<span
+										class="absolute right-3.5 bottom-3 aspect-[780/1688] w-[22%] rounded-[20px] bg-inverse p-1 shadow-[0_18px_32px_-14px_rgb(var(--shadow-rgb)/calc(0.5*var(--shadow-k)))] [--skel-inset:4px] [--skel-radius:16px] max-desk:rounded-[14px] max-desk:p-[3px] max-desk:[--skel-inset:3px] max-desk:[--skel-radius:11px] {imgFrame}"
+										data-fallback=""
+									>
+										<img
+											use:imageState
+											class="block size-full rounded-2xl object-cover object-top max-desk:rounded-[11px] {imgFade}"
+											src={view.phoneOverlay.src}
+											alt={view.phoneOverlay.alt}
+											width={view.phoneOverlay.width}
+											height={view.phoneOverlay.height}
+											loading="lazy"
+											decoding="async"
+										>
+									</span>
+								{/if}
+							</div>
+							<p class={caption}>
+								<span>{shot.caption}</span
+								><span class="flex-none">{pad2(shotI + 1)} / {pad2(shots.length)}</span>
+							</p>
+							{#if shots.length > 1}
+								<ul
+									class="grid grid-cols-[repeat(var(--cols),minmax(0,1fr))] gap-2 max-desk:grid-cols-4"
+									style:--cols={Math.max(3, shots.length)}
+									aria-label="{project.title} screenshots"
 								>
-							</button>
-						</li>
-					{/each}
-				</ul>
-				<p class="caption mono">
-					<span>{shot.caption}</span
-					><span class="count">{pad2(shotI + 1)} / {pad2(shots.length)}</span>
-				</p>
-			{:else}
-				<div class="diagram mono" role="img" aria-label={view.ariaLabel}>
-					{#each view.rows as row, r (r)}
-						{#if r > 0}
-							<span class="link" aria-hidden="true"></span>
+									{#each shots as s, i (s.src)}
+										<li>
+											<button
+												type="button"
+												class={[
+													'relative block aspect-[16/10] w-full overflow-hidden rounded-lg border-2 p-0 [transition:opacity_0.2s_ease,border-color_0.2s_ease] hover:opacity-100',
+													imgFrame,
+													shotI === i
+														? 'border-accent opacity-100'
+														: 'border-transparent opacity-60'
+												]}
+												data-fallback=""
+												aria-pressed={shotI === i}
+												aria-label="Show the {s.label} screenshot"
+												style:background={view.background}
+												onclick={() => pickShot(i)}
+												onkeydown={onShotKeys}
+											>
+												<img
+													use:imageState
+													class="absolute inset-0 size-full object-cover object-top {imgFade}"
+													src={s.src}
+													alt=""
+													width={s.width}
+													height={s.height}
+													loading="lazy"
+													decoding="async"
+												>
+											</button>
+										</li>
+									{/each}
+								</ul>
+							{/if}
+						{:else if view.type === 'phones'}
+							<ul
+								class="flex aspect-[16/11] items-center justify-center gap-[4%] overflow-hidden rounded-2xl border border-line bg-surface bg-[radial-gradient(var(--color-line)_1px,transparent_1.3px)] [background-size:18px_18px] px-4 py-7 max-desk:px-2.5 max-desk:py-5"
+								aria-label="{project.title} screens"
+								use:swipe={swipeShots}
+							>
+								{#each shots as s, i (s.src)}
+									<li class="w-1/4 flex-none">
+										<button
+											type="button"
+											class={[
+												'relative block aspect-[9/19] w-full rounded-[22px] border-0 bg-inverse p-[5px] [--skel-inset:5px] [--skel-radius:17px] [transition:transform_0.45s_cubic-bezier(0.2,0.7,0.2,1),opacity_0.3s_ease,box-shadow_0.3s_ease] hover:opacity-100 focus-visible:rounded-[22px] max-desk:rounded-2xl max-desk:p-[3px] max-desk:[--skel-inset:3px] max-desk:[--skel-radius:13px]',
+												imgFrame,
+												shotI === i
+													? 'opacity-100 shadow-[0_26px_40px_-18px_rgb(var(--shadow-rgb)/calc(0.45*var(--shadow-k)))] [transform:translateY(-6px)_scale(1.06)]'
+													: 'opacity-70 shadow-[0_10px_20px_-14px_rgb(var(--shadow-rgb)/calc(0.3*var(--shadow-k)))] [transform:scale(0.94)]'
+											]}
+											data-fallback="Screen unavailable"
+											aria-pressed={shotI === i}
+											aria-label="Show the {s.label} screen"
+											onclick={() => pickShot(i)}
+											onkeydown={onShotKeys}
+										>
+											<img
+												use:imageState
+												class="block size-full rounded-[17px] object-cover object-top max-desk:rounded-[13px] {imgFade}"
+												src={s.src}
+												alt={alt(s.caption)}
+												width={s.width}
+												height={s.height}
+												loading="lazy"
+												decoding="async"
+											>
+										</button>
+									</li>
+								{/each}
+							</ul>
+							<p class={caption}>
+								<span>{shot.caption}</span
+								><span class="flex-none">{pad2(shotI + 1)} / {pad2(shots.length)}</span>
+							</p>
+						{:else}
+							<div
+								class="flex min-h-[300px] flex-col justify-center rounded-2xl bg-mist bg-[radial-gradient(var(--color-line)_1px,transparent_1.3px)] [background-size:18px_18px] p-[clamp(20px,3vw,36px)] font-mono text-[13px] text-strong"
+								role="img"
+								aria-label={view.ariaLabel}
+							>
+								{#each view.rows as row, r (r)}
+									{#if r > 0}
+										<span
+											class="mx-auto block h-[18px] w-px bg-line-strong"
+											aria-hidden="true"
+										></span>
+									{/if}
+									<div
+										class="grid grid-cols-[repeat(var(--cols),minmax(0,1fr))] gap-2.5 max-desk:gap-1.5"
+										style:--cols={row.length}
+									>
+										{#each row as box (box.label)}
+											<span
+												class={[
+													'flex min-h-11 items-center justify-center rounded-[10px] px-2.5 py-1.5 text-center leading-[1.35] max-desk:p-1.5 max-desk:text-[11px]',
+													boxKind[box.kind]
+												]}
+												>{box.label}</span
+											>
+										{/each}
+									</div>
+								{/each}
+							</div>
+							<p class={caption}><span>{view.caption}</span></p>
 						{/if}
-						<div class="row" style:--cols={row.length}>
-							{#each row as box (box.label)}
-								<span class="box {box.kind}">{box.label}</span>
-							{/each}
-						</div>
-					{/each}
-				</div>
-				<p class="caption mono"><span>{view.caption}</span></p>
-			{/if}
+					</div>
+				{/key}
+			</div>
 		</figure>
 
-		<div class="text">
-			<h3 id="{project.id}-title">{project.title}</h3>
-			<p class="desc">{project.description}</p>
-			<ul class="highlights">
+		<div class="flex min-w-0 flex-[1_1_340px] flex-col gap-4 max-desk:basis-full">
+			<h3
+				id="{project.id}-title"
+				class="text-[clamp(28px,3vw,36px)] leading-[1.1] font-bold tracking-[-0.03em] text-ink"
+			>
+				{project.title}
+			</h3>
+			<p class="text-[16px] leading-[1.65] text-pretty text-strong">{project.description}</p>
+			<ul class="flex flex-col gap-2 text-[15px] leading-[1.55]">
 				{#each project.highlights as h (h)}
-					<li><span class="dash" aria-hidden="true">–</span><span>{h}</span></li>
+					<li class="flex gap-3">
+						<span class="text-accent-700" aria-hidden="true">–</span><span>{h}</span>
+					</li>
 				{/each}
 			</ul>
-			<ul class="stack mono" aria-label="Tech stack">
+			<ul class="flex flex-wrap gap-2 font-mono text-[12px] text-strong" aria-label="Tech stack">
 				{#each project.stack as t (t)}
-					<li>{t}</li>
+					<li class="rounded-md bg-chip px-2.5 py-1">{t}</li>
 				{/each}
 			</ul>
 			{#if project.links.length}
-				<div class="links">
+				<div class="mt-1 flex flex-wrap items-center gap-2.5">
 					{#each project.links as l (l.href)}
 						<a
 							href={l.href}
 							target="_blank"
 							rel="noopener noreferrer"
-							class={l.variant === 'primary' ? 'btn-primary primary' : 'btn-ghost ghost'}
+							class={[
+								'inline-flex min-h-11 items-center gap-2 rounded-full px-[18px] text-[14px] font-medium',
+								l.variant === 'primary'
+									? ['bg-inverse text-on-inverse', btnPrimaryHover]
+									: ['border border-line-strong bg-surface text-strong', btnGhostHover]
+							]}
 						>
 							{#if l.variant === 'ghost' && isGithub(l.href)}
 								<Icon name="github" size={16} />
@@ -228,520 +376,3 @@
 		</div>
 	</div>
 </article>
-
-<style>
-	/* Sticky offset: a stair-step under the header (--deck-top), or — for a card taller than the
-	   viewport — bottom edge 24px above the fold (see fit-sticky.ts). svh = small viewport, so the
-	   offset holds still while mobile toolbars collapse. */
-	.deck-card {
-		--deck-top: calc(88px + var(--i, 0) * 16px);
-		position: sticky;
-		top: min(
-			var(--deck-top),
-			calc(100svh - var(--card-h, 0px) - 24px - env(safe-area-inset-bottom, 0px))
-		);
-		transform-origin: 50% 0;
-		will-change: transform;
-		display: flex;
-		flex-direction: column;
-		gap: 22px;
-		padding: clamp(20px, 2.6vw, 32px);
-		background: var(--color-surface);
-		border: 1px solid var(--color-line);
-		border-radius: 28px;
-		box-shadow:
-			0 1px 2px rgb(var(--shadow-rgb) / calc(0.04 * var(--shadow-k))),
-			0 -18px 48px -32px rgb(var(--shadow-rgb) / calc(0.28 * var(--shadow-k))),
-			0 30px 60px -40px rgb(var(--shadow-rgb) / calc(0.35 * var(--shadow-k)));
-	}
-
-	/* Header row */
-	.head {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: 10px 20px;
-	}
-	.meta {
-		margin: 0;
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: 6px 14px;
-		font-size: 12px;
-		letter-spacing: 0.06em;
-		color: var(--color-muted);
-	}
-	.idx {
-		font-size: 15px;
-		font-weight: 500;
-		color: var(--color-accent-700);
-	}
-	.kind {
-		color: var(--color-accent-700);
-	}
-	.badges {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-	.badge {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
-		padding: 3px 10px;
-		border: 1px solid var(--color-line);
-		border-radius: 999px;
-		background: var(--color-surface);
-		font-size: 11px;
-		line-height: 1.5;
-		color: var(--color-body);
-	}
-	.badge .dot {
-		width: 6px;
-		height: 6px;
-		border-radius: 50%;
-		background: var(--color-line-strong);
-	}
-	.badge.live {
-		background: rgba(249, 115, 22, 0.12);
-		border-color: rgba(249, 115, 22, 0.25);
-		color: var(--color-accent-800);
-	}
-	.badge.live .dot {
-		background: var(--color-accent);
-	}
-	.badge.neutral .dot {
-		background: var(--color-faint);
-	}
-
-	/* Body: media ~55% + text */
-	.body {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 28px 48px;
-		align-items: flex-start;
-	}
-	.media {
-		flex: 1.35 1 440px;
-		min-width: 0;
-		margin: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 12px;
-	}
-	.text {
-		flex: 1 1 340px;
-		min-width: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-	}
-
-	/* Segmented control */
-	.seg {
-		display: flex;
-		gap: 6px;
-		padding: 4px;
-		align-self: flex-start;
-		background: var(--color-chip);
-		border-radius: 999px;
-	}
-	.seg button {
-		min-height: 36px;
-		padding: 0 16px;
-		border: 0;
-		border-radius: 999px;
-		background: transparent;
-		font-size: 13px;
-		font-weight: 500;
-		color: var(--color-body);
-		transition:
-			background-color 0.2s ease,
-			box-shadow 0.2s ease,
-			color 0.2s ease;
-	}
-	.seg button[aria-pressed="true"] {
-		background: var(--color-surface);
-		color: var(--color-ink);
-		box-shadow:
-			0 1px 2px rgb(var(--shadow-rgb) / calc(0.08 * var(--shadow-k))),
-			0 2px 8px -4px rgb(var(--shadow-rgb) / calc(0.15 * var(--shadow-k)));
-	}
-
-	/* Browser view */
-	.browser-wrap {
-		position: relative;
-	}
-	.browser {
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
-		border: 1px solid var(--color-line);
-		border-radius: 16px;
-		box-shadow: 0 24px 48px -30px rgb(var(--shadow-rgb) / calc(0.3 * var(--shadow-k)));
-	}
-	.chrome {
-		flex: 0 0 auto;
-		height: 36px;
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		padding: 0 14px;
-		background: var(--color-surface);
-		border-bottom: 1px solid var(--color-line-soft);
-	}
-	.light {
-		flex: 0 0 auto;
-		width: 9px;
-		height: 9px;
-		border-radius: 50%;
-		background: var(--color-line);
-	}
-	.address {
-		margin-left: 12px;
-		flex: 1;
-		min-width: 0;
-		max-width: 300px;
-		height: 22px;
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		padding: 0 10px;
-		overflow: hidden;
-		border-radius: 6px;
-		/* mist, not chip: muted 10px text on chip would be 4.44:1 (under 4.5). */
-		background: var(--color-mist);
-		font-size: 10px;
-		white-space: nowrap;
-		color: var(--color-muted);
-	}
-	.adot {
-		flex: 0 0 auto;
-		width: 6px;
-		height: 6px;
-		border-radius: 50%;
-		background: var(--color-accent);
-	}
-	.screen {
-		position: relative;
-		flex: 1;
-		min-height: 0;
-	}
-	.screen img {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		object-position: top center;
-	}
-	.overlay {
-		position: absolute;
-		right: 14px;
-		bottom: 12px;
-		width: 22%;
-		aspect-ratio: 780 / 1688;
-		padding: 4px;
-		background: var(--color-inverse);
-		border-radius: 20px;
-		box-shadow: 0 18px 32px -14px rgb(var(--shadow-rgb) / calc(0.5 * var(--shadow-k)));
-	}
-	.overlay img {
-		display: block;
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		object-position: top center;
-		border-radius: 16px;
-	}
-	.caption {
-		margin: 0;
-		display: flex;
-		justify-content: space-between;
-		gap: 12px;
-		font-size: 12px;
-		line-height: 1.5;
-		color: var(--color-muted);
-	}
-	.count {
-		flex: 0 0 auto;
-	}
-	.thumbs {
-		display: grid;
-		grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
-		gap: 8px;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-	.thumb {
-		position: relative;
-		display: block;
-		width: 100%;
-		aspect-ratio: 16 / 10;
-		padding: 0;
-		overflow: hidden;
-		border: 2px solid transparent;
-		border-radius: 8px;
-		opacity: 0.6;
-		transition:
-			opacity 0.2s ease,
-			border-color 0.2s ease;
-	}
-	.thumb.on {
-		opacity: 1;
-	}
-	@media (hover: hover) {
-		.thumb:hover {
-			opacity: 1;
-		}
-	}
-	.thumb.on {
-		border-color: var(--color-accent);
-	}
-	.thumb img {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		object-position: top center;
-	}
-
-	/* Phones view */
-	.phones {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 4%;
-		margin: 0;
-		padding: 28px 16px;
-		aspect-ratio: 16 / 11;
-		overflow: hidden;
-		list-style: none;
-		border: 1px solid var(--color-line);
-		border-radius: 16px;
-		background-color: var(--color-surface);
-		background-image: radial-gradient(var(--color-line) 1px, transparent 1.3px);
-		background-size: 18px 18px;
-	}
-	.phones li {
-		flex: 0 0 auto;
-		width: 25%;
-	}
-	.phone {
-		display: block;
-		width: 100%;
-		aspect-ratio: 9 / 19;
-		padding: 5px;
-		border: 0;
-		border-radius: 22px;
-		background: var(--color-inverse);
-		opacity: 0.7;
-		transform: scale(0.94);
-		box-shadow: 0 10px 20px -14px rgb(var(--shadow-rgb) / calc(0.3 * var(--shadow-k)));
-		transition:
-			transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1),
-			opacity 0.3s ease,
-			box-shadow 0.3s ease;
-	}
-	@media (hover: hover) {
-		.phone:hover {
-			opacity: 1;
-		}
-	}
-	.phone.on {
-		opacity: 1;
-		transform: translateY(-6px) scale(1.06);
-		box-shadow: 0 26px 40px -18px rgb(var(--shadow-rgb) / calc(0.45 * var(--shadow-k)));
-	}
-	.phone img {
-		display: block;
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		object-position: top center;
-		border-radius: 17px;
-	}
-	.phone:focus-visible {
-		border-radius: 22px;
-	}
-
-	/* Diagram view */
-	.diagram {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		min-height: 300px;
-		padding: clamp(20px, 3vw, 36px);
-		background-color: var(--color-mist);
-		background-image: radial-gradient(var(--color-line) 1px, transparent 1.3px);
-		background-size: 18px 18px;
-		border-radius: 16px;
-		font-size: 13px;
-		color: var(--color-strong);
-	}
-	.link {
-		display: block;
-		width: 1px;
-		height: 18px;
-		margin: 0 auto;
-		background: var(--color-line-strong);
-	}
-	.row {
-		display: grid;
-		grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
-		gap: 10px;
-	}
-	.box {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		min-height: 44px;
-		padding: 6px 10px;
-		background: var(--color-surface);
-		border: 1px solid var(--color-line);
-		border-radius: 10px;
-		line-height: 1.35;
-		text-align: center;
-	}
-	.box.key {
-		border: 1.5px solid var(--color-accent);
-		font-weight: 600;
-		color: var(--color-ink);
-	}
-	.box.soft {
-		border: 1px dashed var(--color-line-strong);
-	}
-	.box.data {
-		background: var(--color-inverse);
-		border-color: var(--color-inverse);
-		font-weight: 500;
-		color: var(--color-on-inverse);
-	}
-
-	/* Text column */
-	h3 {
-		margin: 0;
-		font-size: clamp(28px, 3vw, 36px);
-		font-weight: 700;
-		line-height: 1.1;
-		letter-spacing: -0.03em;
-		color: var(--color-ink);
-	}
-	.desc {
-		margin: 0;
-		font-size: 16px;
-		line-height: 1.65;
-		color: var(--color-strong);
-		text-wrap: pretty;
-	}
-	.highlights {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-		font-size: 15px;
-		line-height: 1.55;
-	}
-	.highlights li {
-		display: flex;
-		gap: 12px;
-	}
-	.dash {
-		color: var(--color-accent-700);
-	}
-	.stack {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-		font-size: 12px;
-		color: var(--color-strong);
-	}
-	.stack li {
-		padding: 4px 10px;
-		background: var(--color-chip);
-		border-radius: 6px;
-	}
-	.links {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 10px;
-		margin-top: 4px;
-	}
-	.links a {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		min-height: 44px;
-		padding: 0 18px;
-		border-radius: 999px;
-		font-size: 14px;
-		font-weight: 500;
-	}
-	.primary {
-		background: var(--color-inverse);
-		color: var(--color-on-inverse);
-	}
-	.ghost {
-		background: var(--color-surface);
-		border: 1px solid var(--color-line-strong);
-		color: var(--color-strong);
-	}
-
-	@media (max-width: 820px) {
-		/* Still a sticky deck on phones/tablets — just a tighter stair-step under the 64px bar. */
-		.deck-card {
-			--deck-top: calc(76px + var(--i, 0) * 10px);
-			border-radius: 22px;
-		}
-		.media,
-		.text {
-			flex-basis: 100%;
-		}
-		.thumbs {
-			grid-template-columns: repeat(4, minmax(0, 1fr));
-		}
-		.phones {
-			padding: 20px 10px;
-		}
-		.phone {
-			border-radius: 16px;
-			padding: 3px;
-		}
-		.phone img {
-			border-radius: 13px;
-		}
-		.overlay {
-			border-radius: 14px;
-			padding: 3px;
-		}
-		.overlay img {
-			border-radius: 11px;
-		}
-		.row {
-			gap: 6px;
-		}
-		.box {
-			padding: 6px;
-			font-size: 11px;
-		}
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.deck-card {
-			position: relative !important;
-			top: auto !important;
-		}
-	}
-</style>

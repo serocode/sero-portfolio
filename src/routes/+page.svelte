@@ -12,10 +12,14 @@
 
 <Seo />
 
-<div id="top">
-	<a class="skip" href="#main">Skip to content</a>
+<div id="top" class="min-h-screen overflow-x-clip">
+	<a
+		class="absolute -top-[60px] left-3 z-50 rounded-full bg-inverse px-4 py-2.5 text-[14px] text-on-inverse focus:top-2.5"
+		href="#main"
+		>Skip to content</a
+	>
 	<SiteHeader />
-	<main id="main" tabindex="-1">
+	<main id="main" tabindex="-1" class="focus:outline-none">
 		<Hero />
 		<About />
 		<Approach />
@@ -25,27 +29,3 @@
 	</main>
 	<SiteFooter />
 </div>
-
-<style>
-	#top {
-		min-height: 100vh;
-		overflow-x: clip;
-	}
-	main:focus {
-		outline: none;
-	}
-	.skip {
-		position: absolute;
-		left: 12px;
-		top: -60px;
-		z-index: 50;
-		padding: 10px 16px;
-		background: var(--color-inverse);
-		border-radius: 999px;
-		font-size: 14px;
-		color: var(--color-on-inverse);
-	}
-	.skip:focus {
-		top: 10px;
-	}
-</style>

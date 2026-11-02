@@ -8,49 +8,30 @@
 	}: { n: string; label: string; dark?: boolean; rule?: string } = $props();
 </script>
 
-<div class="label-row" class:dark style:--rule={dark ? 'var(--color-inverse-line)' : rule}>
-	<span class="n mono">{n}</span>
-	<span class="label mono">{label}</span>
-	<span class="rule" aria-hidden="true"></span>
+<div
+	class={['flex items-center gap-3.5', dark ? 'mb-6' : 'mb-[18px]']}
+	style:--rule={dark ? 'var(--color-inverse-line)' : rule}
+>
+	<span
+		class={[
+			'font-mono text-[13px] leading-[1.4]',
+			dark ? 'text-inverse-accent' : 'text-accent-700'
+		]}
+		>{n}</span
+	>
+	<span
+		class={[
+			'font-mono text-[12px] leading-[1.4] tracking-[0.14em] uppercase',
+			dark ? 'text-inverse-muted' : 'text-muted'
+		]}
+		>{label}</span
+	>
+	<!-- 28px accent segment on a 1px rule -->
+	<span
+		class={[
+			'h-0.5 flex-1 [background:linear-gradient(var(--color-accent),var(--color-accent))_left_center/28px_2px_no-repeat,linear-gradient(var(--rule),var(--rule))_left_center/100%_1px_no-repeat]',
+			dark ? 'max-w-[200px]' : 'max-w-[240px]'
+		]}
+		aria-hidden="true"
+	></span>
 </div>
-
-<style>
-	.label-row {
-		display: flex;
-		align-items: center;
-		gap: 14px;
-		margin-bottom: 18px;
-	}
-	.n {
-		font-size: 13px;
-		line-height: 1.4;
-		color: var(--color-accent-700);
-	}
-	.label {
-		font-size: 12px;
-		line-height: 1.4;
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		color: var(--color-muted);
-	}
-	.rule {
-		flex: 1;
-		max-width: 240px;
-		height: 2px;
-		background:
-			linear-gradient(var(--color-accent), var(--color-accent)) left center / 28px 2px no-repeat,
-			linear-gradient(var(--rule), var(--rule)) left center / 100% 1px no-repeat;
-	}
-	.dark {
-		margin-bottom: 24px;
-	}
-	.dark .n {
-		color: var(--color-inverse-accent);
-	}
-	.dark .label {
-		color: var(--color-inverse-muted);
-	}
-	.dark .rule {
-		max-width: 200px;
-	}
-</style>

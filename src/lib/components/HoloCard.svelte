@@ -1,19 +1,36 @@
 <script lang="ts">
-	import '$lib/styles/holo-card.css';
 	import { holoTilt } from '$lib/actions/holo-tilt';
+	import { imageState } from '$lib/actions/image-state';
 	import { about } from '$lib/content/about';
 	import { site } from '$lib/content/site';
+	import { imgFade, imgFrame } from '$lib/ui';
 	import Icon from './Icon.svelte';
 	import Placeholder from './Placeholder.svelte';
 
 	const card = about.card;
 	let flipped = $state(false);
+
+	// Holographic card. use:holoTilt writes --bg-x / --bg-y / --holo-o and the tilt transform on
+	// the outer element; the sheen and glare layers read them.
+	const face = 'absolute inset-0 box-border overflow-hidden rounded-[22px] backface-hidden';
+	const sheen =
+		'pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(110deg,#ffb38a_0%,#ffe9a8_7%,#ffc2d1_14%,#d9ccff_21%,#ffb38a_28%)] [background-position:var(--bg-x)_var(--bg-y)] [background-size:240%_240%] transition-opacity duration-[350ms] ease-[ease] dark:opacity-[calc(0.07_+_0.3_*_var(--holo-o))]';
+	const glare =
+		'pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_var(--bg-x)_var(--bg-y),rgba(255,255,255,0.6),rgba(255,255,255,0)_48%)] opacity-(--holo-o) mix-blend-overlay transition-opacity duration-[350ms] ease-[ease]';
+	const pill =
+		'absolute z-2 inline-flex items-center rounded-full px-2.5 py-1 font-mono text-[11px] leading-[1.4]'; // z-2: above the photo's loading skeleton
+	/** Back-face label: sized from the card width (cqi) so nothing clips at 240–300px. */
+	const k =
+		'font-mono text-[clamp(10px,4.2cqi,11px)] leading-[1.3] tracking-[0.08em] text-inverse-muted uppercase';
 </script>
 
-<div class="holo-tilt" use:holoTilt={{ flipped }}>
+<div
+	class="holo-tilt [--bg-x:50%] [--bg-y:50%] [--holo-o:0] [transform:perspective(1000px)_rotateX(0deg)_rotateY(0deg)] will-change-transform"
+	use:holoTilt={{ flipped }}
+>
 	<button
 		type="button"
-		class="card-btn"
+		class="card-btn @container m-0 block w-full rounded-[22px] border-0 bg-transparent p-0 text-left text-inherit perspective-[1400px]"
 		aria-pressed={flipped}
 		onclick={() => (flipped = !flipped)}
 	>
@@ -21,258 +38,121 @@
 		<span class="sr-only">
 			{flipped ? 'Flip the card back to the photo' : 'Flip the photo card to see credentials'}
 		</span>
-		<span class="holo-inner" class:is-flipped={flipped} aria-hidden="true">
+		<span
+			class={[
+				'relative block aspect-[3/4.2] transform-3d [transition:transform_0.8s_cubic-bezier(0.3,0.7,0.2,1)] motion-reduce:transition-none',
+				flipped && '[transform:rotateY(180deg)]'
+			]}
+			aria-hidden="true"
+		>
 			<!-- Front -->
-			<span class="holo-face front">
-				<span class="well">
+			<span
+				class="{face} flex flex-col border border-line bg-surface p-2 shadow-[0_1px_2px_rgb(var(--shadow-rgb)/calc(0.06*var(--shadow-k))),0_32px_64px_-32px_rgb(var(--shadow-rgb)/calc(0.38*var(--shadow-k)))]"
+			>
+				<span
+					class="relative block flex-1 overflow-hidden rounded-2xl bg-mist {imgFrame}"
+					data-fallback="Photo unavailable"
+				>
 					{#if site.photo}
-						<img src={site.photo} alt="Portrait of {site.name}" class="photo">
+						<img
+							use:imageState
+							src={site.photo}
+							alt="Portrait of {site.name}"
+							class="block size-full object-cover {imgFade}"
+						>
 					{:else}
-						<span class="no-photo">
+						<span
+							class="absolute inset-0 flex flex-col items-center justify-center gap-3 text-[13px] text-muted"
+						>
 							<Icon name="user" size={48} strokeWidth={1.2} />
 							<Placeholder text="[Your photo]" />
 						</span>
 					{/if}
-					<span class="pill number mono">{card.number}</span>
-					<span class="pill where mono">
+					<span
+						class="{pill} top-2.5 left-2.5 gap-[5px] bg-[color-mix(in_srgb,var(--color-surface)_92%,transparent)] tracking-[0.06em] text-ink"
+						>{card.number}</span
+					>
+					<span
+						class="{pill} top-2.5 right-2.5 gap-[5px] bg-accent font-medium tracking-[0.06em] text-on-accent"
+					>
 						<Icon name="map-pin" size={11} strokeWidth={2.4} />{card.location}
 					</span>
-					<span class="pill hint mono">
+					<!-- A dark scrim in both themes: it sits on the photo, not on the page. -->
+					<span
+						class="{pill} bottom-2.5 left-2.5 gap-1.5 bg-[rgba(13,17,23,0.78)] tracking-normal text-white"
+					>
 						<Icon name="rotate" size={12} strokeWidth={2} />{card.flipHint}
 					</span>
 				</span>
-				<span class="strip">
-					<span class="strip-name">{site.name}</span>
-					<span class="strip-line mono">{card.strapline}</span>
+				<span class="flex min-w-0 flex-col gap-0.5 px-1.5 pt-3 pb-1">
+					<span class="text-[17px] leading-[1.2] font-bold tracking-[-0.02em] text-ink"
+						>{site.name}</span
+					>
+					<span class="font-mono text-[11px] leading-[1.4] text-muted">{card.strapline}</span>
 				</span>
-				<span class="holo-sheen" aria-hidden="true"></span>
-				<span class="holo-glare" aria-hidden="true"></span>
+				<span
+					class="{sheen} opacity-[calc(0.22_+_0.5_*_var(--holo-o))] mix-blend-color-dodge"
+					aria-hidden="true"
+				></span>
+				<span class={glare} aria-hidden="true"></span>
 			</span>
 
-			<!-- Back -->
-			<span class="holo-face holo-back back">
-				<span class="roles">
-					<span class="role">
-						<span class="k mono">By role</span>
-						<span class="v">{card.back.byRole}</span>
-					</span>
-					<span class="role">
-						<span class="k mono">By practice</span>
-						<span class="v">{card.back.byPractice}</span>
-					</span>
+			<!-- Back: a flex column sized from the card width (cqi) so nothing clips at 240–300px. -->
+			<span
+				class="{face} holo-back flex [transform:rotateY(180deg)] flex-col gap-[clamp(8px,4.6cqi,16px)] border border-inverse bg-[linear-gradient(160deg,var(--color-inverse),color-mix(in_srgb,var(--color-inverse)_85%,var(--color-inverse-line)))] px-[clamp(16px,8cqi,22px)] pt-[clamp(16px,8.5cqi,24px)] pb-[clamp(14px,7cqi,20px)] text-inverse-body shadow-[0_32px_64px_-32px_rgb(var(--shadow-rgb)/calc(0.5*var(--shadow-k)))]"
+			>
+				<span class="flex flex-col">
+					{#each [
+						{ k: 'By role', v: card.back.byRole },
+						{ k: 'By practice', v: card.back.byPractice }
+					] as role (role.k)}
+						<span
+							class="flex flex-col gap-0.5 border-t border-inverse-line py-[clamp(7px,3.8cqi,12px)] last:border-b"
+						>
+							<span class={k}>{role.k}</span>
+							<span
+								class="text-[clamp(13px,5.8cqi,16px)] leading-[1.25] font-semibold text-on-inverse"
+								>{role.v}</span
+							>
+						</span>
+					{/each}
 				</span>
-				<span class="creds">
-					<span class="k mono">Credentials</span>
+				<span class="flex flex-col gap-[clamp(4px,2.6cqi,8px)]">
+					<span class={k}>Credentials</span>
 					{#each card.back.credentials as c (c.label)}
-						<span class="cred" class:current={!!c.note}>
-							<span class="dot" aria-hidden="true"></span>
-							<span class="cred-label">{c.label}</span>
+						<span
+							class="flex items-start gap-2.5 text-[clamp(12px,5.2cqi,14px)] leading-[1.3] text-on-inverse"
+						>
+							<span
+								class={[
+									'mt-[0.45em] size-1.5 flex-none rounded-full',
+									c.note
+										? 'bg-accent'
+										: 'bg-[color-mix(in_srgb,var(--color-on-inverse)_30%,var(--color-inverse))]'
+								]}
+								aria-hidden="true"
+							></span>
+							<span class="min-w-0 flex-1">{c.label}</span>
 							{#if c.note}
-								<span class="note mono">{c.note}</span>
+								<span
+									class="font-mono text-[clamp(10px,4.2cqi,11px)] leading-[1.6] text-inverse-accent"
+									>{c.note}</span
+								>
 							{/if}
 						</span>
 					{/each}
 				</span>
-				<span class="flip-back mono">
+				<span
+					class="mt-auto inline-flex items-center gap-[5px] font-mono text-[11px] leading-[1.4] text-inverse-accent"
+				>
 					<Icon name="rotate" size={13} strokeWidth={2} />Flip back
 				</span>
-				<span class="holo-sheen holo-sheen-dark" aria-hidden="true"></span>
-				<span class="holo-glare" aria-hidden="true"></span>
+				<span
+					class="{sheen} opacity-[calc(0.06_+_0.16_*_var(--holo-o))] mix-blend-screen"
+					aria-hidden="true"
+				></span>
+				<span class={glare} aria-hidden="true"></span>
 			</span>
 		</span>
 	</button>
 </div>
-
-<style>
-	.card-btn {
-		display: block;
-		width: 100%;
-		padding: 0;
-		margin: 0;
-		border: 0;
-		border-radius: 22px;
-		background: transparent;
-		color: inherit;
-		text-align: left;
-		perspective: 1400px;
-		container-type: inline-size;
-	}
-	.holo-inner {
-		aspect-ratio: 3 / 4.2;
-	}
-
-	/* ── Front ── */
-	.front {
-		display: flex;
-		flex-direction: column;
-		padding: 8px;
-		background: var(--color-surface);
-		border: 1px solid var(--color-line);
-		box-shadow:
-			0 1px 2px rgb(var(--shadow-rgb) / calc(0.06 * var(--shadow-k))),
-			0 32px 64px -32px rgb(var(--shadow-rgb) / calc(0.38 * var(--shadow-k)));
-	}
-	.well {
-		position: relative;
-		flex: 1;
-		display: block;
-		overflow: hidden;
-		border-radius: 16px;
-		background: var(--color-mist);
-	}
-	.photo {
-		display: block;
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-	}
-	.no-photo {
-		position: absolute;
-		inset: 0;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 12px;
-		font-size: 13px;
-		color: var(--color-muted);
-	}
-	.pill {
-		position: absolute;
-		display: inline-flex;
-		align-items: center;
-		gap: 5px;
-		padding: 4px 10px;
-		border-radius: 999px;
-		font-size: 11px;
-		line-height: 1.4;
-		letter-spacing: 0.06em;
-	}
-	.number {
-		top: 10px;
-		left: 10px;
-		background: color-mix(in srgb, var(--color-surface) 92%, transparent);
-		color: var(--color-ink);
-	}
-	.where {
-		top: 10px;
-		right: 10px;
-		background: var(--color-accent);
-		font-weight: 500;
-		color: var(--color-on-accent);
-	}
-	.hint {
-		bottom: 10px;
-		left: 10px;
-		gap: 6px;
-		letter-spacing: 0;
-		background: rgba(13, 17, 23, 0.78);
-		color: #fff;
-	}
-	.strip {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-		min-width: 0;
-		padding: 12px 6px 4px;
-	}
-	.strip-name {
-		font-size: 17px;
-		font-weight: 700;
-		line-height: 1.2;
-		letter-spacing: -0.02em;
-		color: var(--color-ink);
-	}
-	.strip-line {
-		font-size: 11px;
-		line-height: 1.4;
-		color: var(--color-muted);
-	}
-
-	/* "Flip for more" stays a dark scrim in both themes: it sits on the photo, not on the page. */
-
-	/* ── Back: flex column sized from the card width (cqi) so nothing clips at 240–300px ── */
-	.back {
-		display: flex;
-		flex-direction: column;
-		gap: clamp(8px, 4.6cqi, 16px);
-		padding: clamp(16px, 8.5cqi, 24px) clamp(16px, 8cqi, 22px) clamp(14px, 7cqi, 20px);
-		background: linear-gradient(
-			160deg,
-			var(--color-inverse),
-			color-mix(in srgb, var(--color-inverse) 85%, var(--color-inverse-line))
-		);
-		border: 1px solid var(--color-inverse);
-		color: var(--color-inverse-body);
-		box-shadow: 0 32px 64px -32px rgb(var(--shadow-rgb) / calc(0.5 * var(--shadow-k)));
-	}
-	.k {
-		font-size: clamp(10px, 4.2cqi, 11px);
-		line-height: 1.3;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--color-inverse-muted);
-	}
-	.roles {
-		display: flex;
-		flex-direction: column;
-	}
-	.role {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-		padding: clamp(7px, 3.8cqi, 12px) 0;
-		border-top: 1px solid var(--color-inverse-line);
-	}
-	.role:last-child {
-		border-bottom: 1px solid var(--color-inverse-line);
-	}
-	.v {
-		font-size: clamp(13px, 5.8cqi, 16px);
-		font-weight: 600;
-		line-height: 1.25;
-		color: var(--color-on-inverse);
-	}
-	.creds {
-		display: flex;
-		flex-direction: column;
-		gap: clamp(4px, 2.6cqi, 8px);
-	}
-	.cred {
-		display: flex;
-		align-items: flex-start;
-		gap: 10px;
-		font-size: clamp(12px, 5.2cqi, 14px);
-		line-height: 1.3;
-		color: var(--color-on-inverse);
-	}
-	.dot {
-		flex: 0 0 auto;
-		width: 6px;
-		height: 6px;
-		margin-top: 0.45em;
-		border-radius: 50%;
-		background: color-mix(in srgb, var(--color-on-inverse) 30%, var(--color-inverse));
-	}
-	.current .dot {
-		background: var(--color-accent);
-	}
-	.cred-label {
-		flex: 1;
-		min-width: 0;
-	}
-	.note {
-		font-size: clamp(10px, 4.2cqi, 11px);
-		line-height: 1.6;
-		color: var(--color-inverse-accent);
-	}
-	.flip-back {
-		margin-top: auto;
-		display: inline-flex;
-		align-items: center;
-		gap: 5px;
-		font-size: 11px;
-		line-height: 1.4;
-		color: var(--color-inverse-accent);
-	}
-</style>

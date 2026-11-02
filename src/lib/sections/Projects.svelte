@@ -4,21 +4,22 @@
 	import ProjectCard from '$lib/components/ProjectCard.svelte';
 	import Section from '$lib/components/Section.svelte';
 	import { projects } from '$lib/content/projects';
+	import { textLink } from '$lib/ui';
 	import { spellCap } from '$lib/utils/format';
 
 	const sub = `${spellCap(projects.length)} projects, one card each — keep scrolling and the next one slides in over the last.`;
 </script>
 
 <Section id="projects" n="03" label="Projects" heading="Things I've built." {sub} tone="mist">
-	<div class="deck" use:deckScroll>
+	<div class="flex flex-col gap-[72px] max-desk:gap-6" use:deckScroll>
 		{#each projects as project, i (project.id)}
 			<ProjectCard {project} index={i} total={projects.length} />
 		{/each}
 	</div>
 
-	<div class="more">
+	<div class="mt-10">
 		<a
-			class="textlink"
+			class="inline-flex min-h-11 items-center gap-2 text-[14px] font-medium text-ink {textLink}"
 			href="https://github.com/serocode"
 			target="_blank"
 			rel="noopener noreferrer"
@@ -29,28 +30,3 @@
 		</a>
 	</div>
 </Section>
-
-<style>
-	.deck {
-		display: flex;
-		flex-direction: column;
-		gap: 72px;
-	}
-	.more {
-		margin-top: 40px;
-	}
-	.more a {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		min-height: 44px;
-		font-size: 14px;
-		font-weight: 500;
-		color: var(--color-ink);
-	}
-	@media (max-width: 820px) {
-		.deck {
-			gap: 24px;
-		}
-	}
-</style>

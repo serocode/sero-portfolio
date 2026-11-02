@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { fly } from 'svelte/transition';
+	import { untrack } from 'svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import Section from '$lib/components/Section.svelte';
 	import { approach, approachIntro } from '$lib/content/approach';
-	import { pad2, prefersReducedMotion } from '$lib/utils/format';
+	import { HeightTween, swap } from '$lib/motion';
+	import { pad2 } from '$lib/utils/format';
 
 	const total = pad2(approach.length);
 
@@ -14,30 +14,59 @@
 	const shown = $derived(preview ?? selected);
 	const cur = $derived(approach[shown]);
 
-	let reduce = $state(false);
-	onMount(() => {
-		reduce = prefersReducedMotion();
+	// Moving to another topic: the panel's content swaps with a direction-aware slide while its
+	// height glides to the new size (see src/lib/motion.ts).
+	let stage = $state<HTMLElement>();
+	const tween = new HeightTween();
+	$effect(() => tween.attach(stage));
+	/** +1 = next (content moves left), -1 = previous. */
+	let dir = $state<1 | -1>(1);
+	let forcedDir: 1 | -1 | null = null;
+	let lastShown = 0;
+	$effect.pre(() => {
+		const s = shown;
+		untrack(() => {
+			if (s === lastShown) return;
+			dir = forcedDir ?? (s > lastShown ? 1 : -1);
+			forcedDir = null;
+			lastShown = s;
+			tween.lock();
+		});
+	});
+	$effect(() => {
+		const s = shown;
+		untrack(() => tween.to(stage?.querySelector<HTMLElement>(`[data-key="${s}"]`)));
 	});
 
 	let tabs: HTMLButtonElement[] = $state([]);
 
-	function select(i: number) {
+	/** The topic panel (also the WAI-ARIA tabpanel, so it's focusable). */
+	const panel =
+		'relative flex min-h-[380px] flex-col gap-5 overflow-hidden rounded-3xl bg-mist p-[clamp(28px,4vw,48px)] focus-visible:rounded-3xl focus-visible:outline-offset-4';
+	/** Previous / next topic buttons. */
+	const navButton =
+		'flex size-11 items-center justify-center rounded-full border border-line bg-surface text-strong [transition:background-color_0.15s_ease,border-color_0.15s_ease,color_0.15s_ease] hover:border-inverse hover:bg-inverse hover:text-on-inverse focus-visible:rounded-full';
+
+	/** `step` says which way you moved (the prev/next buttons and arrow keys wrap around, but
+	    still read as previous/next). */
+	function select(i: number, step?: 1 | -1) {
+		forcedDir = step ?? null;
 		selected = (i + approach.length) % approach.length;
 		preview = null;
 	}
 
 	function onKeydown(event: KeyboardEvent) {
-		const keys: Record<string, number> = {
-			ArrowDown: selected + 1,
-			ArrowRight: selected + 1,
-			ArrowUp: selected - 1,
-			ArrowLeft: selected - 1,
-			Home: 0,
-			End: approach.length - 1
+		const keys: Record<string, [number, 1 | -1]> = {
+			ArrowDown: [selected + 1, 1],
+			ArrowRight: [selected + 1, 1],
+			ArrowUp: [selected - 1, -1],
+			ArrowLeft: [selected - 1, -1],
+			Home: [0, -1],
+			End: [approach.length - 1, 1]
 		};
 		if (!(event.key in keys)) return;
 		event.preventDefault();
-		select(keys[event.key]);
+		select(...keys[event.key]);
 		tabs[selected]?.focus();
 	}
 </script>
@@ -49,9 +78,13 @@
 	heading={approachIntro.heading}
 	sub={approachIntro.sub}
 >
-	<div class="layout">
+	<!-- Desktop: vertical tab list | panel. ≤820px: the tabs wrap into a grid (2 columns on phones,
+	     4 on tablets) above the panel, so the whole section sits inside the viewport. -->
+	<div
+		class="grid grid-cols-[264px_minmax(0,1fr)] items-stretch gap-x-10 gap-y-6 max-desk:grid-cols-[minmax(0,1fr)]"
+	>
 		<div
-			class="list"
+			class="flex flex-col gap-1.5 max-desk:grid max-desk:grid-cols-[repeat(auto-fit,minmax(min(100%,148px),1fr))] max-desk:gap-2"
 			role="tablist"
 			aria-label="Approach topics"
 			aria-orientation="vertical"
@@ -65,8 +98,12 @@
 					type="button"
 					role="tab"
 					id="ap-tab-{i}"
-					class="item"
-					class:on={shown === i}
+					class={[
+						'relative flex min-h-[76px] w-full items-center gap-[18px] rounded-[14px] border-0 py-4 pr-[18px] pl-6 text-left [transition:background-color_0.2s_ease,color_0.2s_ease] max-desk:min-h-13 max-desk:gap-2.5 max-desk:border max-desk:px-3.5 max-desk:py-2.5',
+						shown === i
+							? 'bg-mist text-ink max-desk:border-ink'
+							: 'bg-transparent text-body max-desk:border-line'
+					]}
 					aria-selected={shown === i}
 					aria-controls="ap-panel"
 					tabindex={selected === i ? 0 : -1}
@@ -74,13 +111,30 @@
 					onfocus={() => select(i)}
 					onmouseenter={() => (preview = i)}
 				>
-					<span class="bar" aria-hidden="true"></span>
-					<span class="n mono">{item.n}</span>
-					<span class="labels">
-						<span class="label">{item.label}</span>
-						<span class="from mono">{item.from}</span>
+					<span
+						class={[
+							'absolute top-[18px] bottom-[18px] left-0 w-[3px] rounded-[3px] bg-accent transition-opacity duration-[250ms] ease-[ease] max-desk:hidden',
+							shown === i ? 'opacity-100' : 'opacity-0'
+						]}
+						aria-hidden="true"
+					></span>
+					<span class="font-mono text-[12px] text-accent-700">{item.n}</span>
+					<span class="flex flex-1 flex-col gap-0.5">
+						<span
+							class="text-[17px] leading-[1.3] font-semibold tracking-[-0.01em] max-desk:text-[15px] max-desk:leading-[1.25]"
+							>{item.label}</span
+						>
+						<span
+							class="font-mono text-[11px] leading-[1.4] tracking-[0.06em] text-muted uppercase max-desk:hidden"
+							>{item.from}</span
+						>
 					</span>
-					<span class="arrow" aria-hidden="true"
+					<span
+						class={[
+							'flex [transition:opacity_0.25s_ease,transform_0.25s_ease] max-desk:hidden',
+							shown === i ? 'transform-none opacity-100' : '[transform:translateX(-6px)] opacity-20'
+						]}
+						aria-hidden="true"
 						><Icon name="arrow-right" size={18} strokeWidth={2} /></span
 					>
 				</button>
@@ -88,298 +142,72 @@
 		</div>
 
 		<!-- biome-ignore lint/a11y/noNoninteractiveTabindex: WAI-ARIA tabs pattern — the tabpanel is focusable -->
-		<div id="ap-panel" class="panel" role="tabpanel" aria-labelledby="ap-tab-{shown}" tabindex="0">
-			<span class="big" aria-hidden="true" data-n={cur.n}></span>
-			<div class="top">
-				<p class="count mono"><span class="n">{cur.n}</span> / {total} · {cur.from}</p>
-				<div class="navs">
+		<div id="ap-panel" class={panel} role="tabpanel" aria-labelledby="ap-tab-{shown}" tabindex="0">
+			<!-- Decorative numeral drawn from a pseudo-element so it isn't read or contrast-checked as text. -->
+			<span
+				class="pointer-events-none absolute -right-2 -bottom-[0.26em] text-[clamp(120px,16vw,190px)] leading-none font-extrabold tracking-[-0.06em] text-numeral before:content-[attr(data-n)] max-desk:text-[120px]"
+				aria-hidden="true"
+				data-n={cur.n}
+			></span>
+			<div class="relative flex items-center justify-between gap-4">
+				<p class="font-mono text-[12px] text-muted">
+					<span class="text-accent-700">{cur.n}</span>
+					/ {total} · {cur.from}
+				</p>
+				<div class="flex gap-2">
 					<button
 						type="button"
-						class="ap-nav"
+						class={navButton}
 						aria-label="Previous topic"
-						onclick={() => select(selected - 1)}
+						onclick={() => select(selected - 1, -1)}
 					>
 						<Icon name="arrow-left" size={16} strokeWidth={2} />
 					</button>
 					<button
 						type="button"
-						class="ap-nav"
+						class={navButton}
 						aria-label="Next topic"
-						onclick={() => select(selected + 1)}
+						onclick={() => select(selected + 1, 1)}
 					>
 						<Icon name="arrow-right" size={16} strokeWidth={2} />
 					</button>
 				</div>
 			</div>
-			{#key shown}
-				<div class="content" in:fly={{ y: 8, duration: reduce ? 0 : 180 }}>
-					<h3>{cur.title}</h3>
-					<p class="body">{cur.body}</p>
-					<ul class="tags mono" aria-label="Related">
-						{#each cur.tags as tag (tag)}
-							<li>{tag}</li>
-						{/each}
-					</ul>
-				</div>
-			{/key}
-			<div class="segs" aria-hidden="true">
+			<!-- One grid cell: the outgoing and incoming topic overlap briefly while swapping. -->
+			<div class="relative grid items-start [&>*]:[grid-area:1/1]" bind:this={stage}>
+				{#key shown}
+					<div
+						class="flex flex-col gap-5"
+						data-key={shown}
+						in:swap={{ dir }}
+						out:swap={{ dir, out: true }}
+					>
+						<h3
+							class="mt-2 max-w-[520px] text-[clamp(26px,3vw,34px)] leading-[1.12] font-bold tracking-[-0.03em] text-balance text-ink"
+						>
+							{cur.title}
+						</h3>
+						<p class="max-w-[400px] text-[17px] leading-[1.7] text-pretty text-strong">
+							{cur.body}
+						</p>
+						<ul class="flex flex-wrap gap-2 font-mono text-[12px] text-strong" aria-label="Related">
+							{#each cur.tags as tag (tag)}
+								<li class="rounded-md border border-line bg-surface px-2.5 py-1">{tag}</li>
+							{/each}
+						</ul>
+					</div>
+				{/key}
+			</div>
+			<div class="relative mt-auto flex max-w-[240px] gap-1.5 pt-3" aria-hidden="true">
 				{#each approach as item, i (item.n)}
-					<span class:done={i <= shown}></span>
+					<span
+						class={[
+							'h-[3px] flex-1 rounded-[3px] transition-colors duration-[250ms] ease-[ease]',
+							i <= shown ? 'bg-accent' : 'bg-line'
+						]}
+					></span>
 				{/each}
 			</div>
 		</div>
 	</div>
 </Section>
-
-<style>
-	.layout {
-		display: grid;
-		grid-template-columns: 264px minmax(0, 1fr);
-		gap: 24px 40px;
-		align-items: stretch;
-	}
-	.list {
-		display: flex;
-		flex-direction: column;
-		gap: 6px;
-	}
-	.item {
-		position: relative;
-		width: 100%;
-		min-height: 76px;
-		display: flex;
-		align-items: center;
-		gap: 18px;
-		padding: 16px 18px 16px 24px;
-		background: transparent;
-		border: 0;
-		border-radius: 14px;
-		text-align: left;
-		color: var(--color-body);
-		transition:
-			background-color 0.2s ease,
-			color 0.2s ease;
-	}
-	.item.on {
-		background: var(--color-mist);
-		color: var(--color-ink);
-	}
-	.bar {
-		position: absolute;
-		left: 0;
-		top: 18px;
-		bottom: 18px;
-		width: 3px;
-		border-radius: 3px;
-		background: var(--color-accent);
-		opacity: 0;
-		transition: opacity 0.25s ease;
-	}
-	.on .bar {
-		opacity: 1;
-	}
-	.item .n {
-		font-size: 12px;
-		color: var(--color-accent-700);
-	}
-	.labels {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-	}
-	.label {
-		font-size: 17px;
-		font-weight: 600;
-		line-height: 1.3;
-		letter-spacing: -0.01em;
-	}
-	.from {
-		font-size: 11px;
-		line-height: 1.4;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		color: var(--color-muted);
-	}
-	.arrow {
-		display: flex;
-		opacity: 0.2;
-		transform: translateX(-6px);
-		transition:
-			opacity 0.25s ease,
-			transform 0.25s ease;
-	}
-	.on .arrow {
-		opacity: 1;
-		transform: none;
-	}
-
-	.panel {
-		position: relative;
-		overflow: hidden;
-		min-height: 380px;
-		display: flex;
-		flex-direction: column;
-		gap: 20px;
-		padding: clamp(28px, 4vw, 48px);
-		background: var(--color-mist);
-		border-radius: 24px;
-	}
-	.panel:focus-visible {
-		outline-offset: 4px;
-		border-radius: 24px;
-	}
-	/* Decorative numeral drawn from a pseudo-element so it isn't read or contrast-checked as text. */
-	.big::before {
-		content: attr(data-n);
-	}
-	.big {
-		position: absolute;
-		right: -8px;
-		bottom: -0.26em;
-		font-size: clamp(120px, 16vw, 190px);
-		font-weight: 800;
-		line-height: 1;
-		letter-spacing: -0.06em;
-		color: var(--color-numeral);
-		pointer-events: none;
-	}
-	.top {
-		position: relative;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 16px;
-	}
-	.count {
-		margin: 0;
-		font-size: 12px;
-		color: var(--color-muted);
-	}
-	.count .n {
-		color: var(--color-accent-700);
-	}
-	.navs {
-		display: flex;
-		gap: 8px;
-	}
-	.ap-nav {
-		width: 44px;
-		height: 44px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: var(--color-surface);
-		border: 1px solid var(--color-line);
-		border-radius: 50%;
-		color: var(--color-strong);
-		transition:
-			background-color 0.15s ease,
-			border-color 0.15s ease,
-			color 0.15s ease;
-	}
-	/* hover: hover — a tap on a touch screen shouldn't leave the button stuck in its hover state. */
-	@media (hover: hover) {
-		.ap-nav:hover {
-			background: var(--color-inverse);
-			border-color: var(--color-inverse);
-			color: var(--color-on-inverse);
-		}
-	}
-	.ap-nav:focus-visible {
-		border-radius: 50%;
-	}
-	.content {
-		position: relative;
-		display: flex;
-		flex-direction: column;
-		gap: 20px;
-	}
-	h3 {
-		margin: 8px 0 0;
-		max-width: 520px;
-		font-size: clamp(26px, 3vw, 34px);
-		font-weight: 700;
-		line-height: 1.12;
-		letter-spacing: -0.03em;
-		color: var(--color-ink);
-		text-wrap: balance;
-	}
-	.body {
-		margin: 0;
-		max-width: 400px;
-		font-size: 17px;
-		line-height: 1.7;
-		color: var(--color-strong);
-		text-wrap: pretty;
-	}
-	.tags {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-		font-size: 12px;
-		color: var(--color-strong);
-	}
-	.tags li {
-		padding: 4px 10px;
-		background: var(--color-surface);
-		border: 1px solid var(--color-line);
-		border-radius: 6px;
-	}
-	.segs {
-		position: relative;
-		margin-top: auto;
-		padding-top: 12px;
-		display: flex;
-		gap: 6px;
-		max-width: 240px;
-	}
-	.segs span {
-		flex: 1;
-		height: 3px;
-		border-radius: 3px;
-		background: var(--color-line);
-		transition: background-color 0.25s ease;
-	}
-	.segs span.done {
-		background: var(--color-accent);
-	}
-
-	@media (max-width: 820px) {
-		.layout {
-			grid-template-columns: minmax(0, 1fr);
-		}
-		/* Tabs wrap into a grid (2 columns on phones, 4 on tablets) instead of a sideways
-		   scroller, so the whole section sits inside the viewport. */
-		.list {
-			display: grid;
-			grid-template-columns: repeat(auto-fit, minmax(min(100%, 148px), 1fr));
-			gap: 8px;
-		}
-		.item {
-			min-height: 52px;
-			gap: 10px;
-			padding: 10px 14px;
-			border: 1px solid var(--color-line);
-			border-radius: 14px;
-		}
-		.item.on {
-			border-color: var(--color-ink);
-		}
-		.bar,
-		.from,
-		.arrow {
-			display: none;
-		}
-		.label {
-			font-size: 15px;
-			line-height: 1.25;
-		}
-		.big {
-			font-size: 120px;
-		}
-	}
-</style>
