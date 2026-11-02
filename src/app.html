@@ -1,5 +1,13 @@
 <!doctype html>
-<html lang="en">
+<!--
+  Snapping: the document is the one scroll container; each section's top snaps under the sticky
+  header (sections taller than the screen scroll freely between their edges). With reduced motion:
+  no smooth scrolling and only gentle (proximity) snapping.
+-->
+<html
+	lang="en"
+	class="scroll-pt-(--header-h) snap-y snap-mandatory scroll-smooth motion-reduce:snap-proximity motion-reduce:scroll-auto"
+>
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,7 +18,7 @@
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/apple-touch-icon.png">
 		<link rel="manifest" href="%sveltekit.assets%/site.webmanifest">
 		<script>
-			// Set the theme before first paint so dark-mode visitors never see a white flash.
+			// Before first paint: set the theme (no white flash for dark-mode visitors) and the loader.
 			// Explicit choice (localStorage) wins; otherwise follow the OS. See src/lib/theme.svelte.ts.
 			(() => {
 				let t;
@@ -26,11 +34,33 @@
 				if (t === 'dark') {
 					document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#0b0f14');
 				}
+
+				// Intro loader: first load of a session only, never with reduced motion. Switched on
+				// here so it covers the page from the first frame; without JS it never appears.
+				try {
+					if (
+						!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches &&
+						!sessionStorage.getItem('intro-seen')
+					) {
+						r.dataset.loader = 'on';
+						// Safety net, ~3s from navigation start: if the app hasn't taken over yet (very slow
+						// connection), lift the curtain anyway — "out" plays the same exit in pure CSS.
+						setTimeout(
+							() => {
+								if (r.dataset.loader === 'on') r.dataset.loader = 'out';
+							},
+							Math.max(0, 3200 - performance.now())
+						);
+					}
+				} catch {}
 			})();
 		</script>
 		%sveltekit.head%
 	</head>
-	<body data-sveltekit-preload-data="hover">
+	<body
+		class="bg-paper font-sans text-[17px] leading-[1.7] text-body antialiased loader-on:overflow-hidden"
+		data-sveltekit-preload-data="hover"
+	>
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>

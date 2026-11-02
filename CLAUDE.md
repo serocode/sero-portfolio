@@ -1,25 +1,32 @@
 # Anthony Serojales — portfolio (SvelteKit)
 
-Personal developer portfolio. The design is already approved; the job is to build it faithfully in
-SvelteKit, not to redesign it.
+Personal developer portfolio. The design is approved and built; keep changes consistent with it
+rather than redesigning.
 
 ## Sources of truth (read before changing UI)
 
-- `reference/screens/*.jpg|png` — what each section must look like (desktop, 1440px wide).
-- `reference/design-source/Main.dc.html` — the approved desktop page. Inline styles are the spec:
-  copy spacing, sizes, radii, colours and copy from it. (`Mobile.dc.html` = phone hero + menu,
-  `System.dc.html` = design-system sheet.) Ignore its `{{…}}`, `<sc-for>`, `<sc-if>`, `<x-dc>` and
-  `class Component` plumbing — that's the prototype runtime, not something to port.
+- The site itself: tokens in `src/app.css` (`@theme`) and `src/lib/styles/theme.css` (dark), and
+  the existing components. Match their spacing, sizes, radii and colours.
+- `docs/screenshots/` — how each section, the dark theme, phones, the loader and the theme switch
+  look (also shown in `README.md`). Re-capture them when the UI changes.
 - `src/lib/content/*.ts` — all copy and data. Components read from here; no copy hard-coded in markup.
 
 ## Stack
 
 - SvelteKit 2 + Svelte 5 (runes: `$state`, `$derived`, `$props`, `$effect`), TypeScript strict.
-- Tailwind CSS v4 via `@tailwindcss/vite`; tokens live in `src/app.css` (`@theme`), dark overrides in `src/lib/styles/theme.css`. The 820px breakpoint is the
-  `desk:` variant (min-width 821px, mobile-first). Element defaults (`a`, `button`, `body`) sit in
-  `@layer base` so utilities override them — keep new global element rules there. Use token
-  utilities (`text-ink`, `bg-mist`, `border-line`, `text-accent-700`…). Component-specific effects
-  (holo card, deck, skills grid) go in scoped `<style>` or `src/lib/styles/*.css`.
+- Tailwind CSS v4 via `@tailwindcss/vite`. **Style with Tailwind classes only; write CSS only for
+  what Tailwind can't express.** No `<style>` blocks in components. Use token utilities
+  (`text-ink`, `bg-mist`, `border-line`, `text-accent-700`…), variants for states (`desk:` /
+  `max-desk:` for the 820px breakpoint — min-width 821px, mobile-first — `dark:`, `hover:`,
+  `aria-*`, `data-*`, `has-*`, `group-*`, `motion-reduce:`, `@container`/`@min-*`, and the
+  `loader-on:` / `loader-out:` app-state variants), and arbitrary values for one-offs. Put class
+  lists shared by several components in `src/lib/ui.ts` (complete literal strings — Tailwind finds
+  classes by scanning source text). Page-level classes for `<html>`/`<body>` are in `src/app.html`.
+- What stays CSS (Tailwind is configured in CSS, or no class can do it): tokens, animation tokens
+  (`--animate-*`) with their `@keyframes`, and custom variants in `src/app.css`; element defaults
+  in its `@layer base`; the page-wide reduced-motion transition rule; dark token overrides and the
+  theme cross-fade in `src/lib/styles/theme.css`; View Transition pseudo-elements in
+  `src/lib/styles/theme-transition.css`. New animations: add an `--animate-*` token + `@keyframes`.
 - three.js for the hero only, loaded with a dynamic `import()` inside `onMount`.
 - Fonts: `@fontsource-variable/schibsted-grotesk`, `@fontsource-variable/jetbrains-mono`.
 - `@sveltejs/adapter-vercel`; the whole site is prerendered (`export const prerender = true`).
@@ -43,9 +50,19 @@ SvelteKit, not to redesign it.
    real `alt` text from the data (`caption`). Body text contrast ≥ 4.5:1.
 4. **Motion:** everything animated has a `prefers-reduced-motion` path (hero renders one still
    frame; deck becomes a normal stack; no spin; no tilt).
+   The intro loader (`IntroLoader.svelte`, switched on by the head script in `app.html`) plays once
+   per session, never with reduced motion or without JS, waits only for critical readiness (fonts;
+   1.2s min, 3s max from navigation) and never for the 3D hero.
+   One motion spec for UI transitions: `src/lib/motion.ts` (480ms, ease-out-cubic — its CSS twin
+   is the `ease-smooth` token). Swapping content for the next uses `swap` (direction-aware slide,
+   no text-on-text) in a one-cell grid plus `HeightTween` so containers resize smoothly; sections
+   arrive with `use:reveal` + `revealItem` (src/lib/ui.ts).
 5. **Performance:** images use the `width`/`height` from the data + `loading="lazy"` below the fold;
    three.js not in the initial bundle; pause the WebGL loop when the hero is off-screen (already
    done in `hero-scene.ts`). Lighthouse ≥ 95 on Performance, Accessibility, Best Practices, SEO.
+   Late-loading images use `use:imageState` inside an `.img-frame` that reserves their box
+   (skeleton while loading, fallback tile on error — `imgFrame` / `imgFade` in `src/lib/ui.ts`); the hero scene
+   has its own `loading → ready | failed` skeleton. Text is prerendered, so it gets no skeleton.
 6. **Responsive:** 1440 → 390px with no horizontal scroll. The one breakpoint that changes layout is
    820px (nav → menu button, deck keeps its sticky stack with a tighter stair-step, Approach tabs
    become a wrapping grid, skills columns become 2-letter codes). About alone adds a 700px step

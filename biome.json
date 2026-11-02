@@ -9,9 +9,8 @@
 		"includes": [
 			"**",
 			"!static",
-			"!reference",
-			"!prompts",
-			"!dark-mode-and-logo",
+			"!docs",
+
 			"!.svelte-kit",
 			"!.vercel",
 			"!build"

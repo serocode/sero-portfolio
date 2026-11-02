@@ -1,5 +1,5 @@
 /*
- * "Paper & Ember" — design tokens from the approved design (reference/design-source/System.dc.html).
+ * "Paper & Ember" — design tokens of the approved design.
  * White dominant, one accent (#f97316). No cobalt/blue anywhere.
  */
 @import "tailwindcss";
@@ -8,6 +8,8 @@
 /* Dark theme: extra tokens + every dark override, the `dark:` variant, the switch cross-fade.
    Order-independent: overrides sit on :root[data-theme='dark'], which outranks @theme's :root. */
 @import "./lib/styles/theme.css";
+/* Theme switch: the new theme grows as a circle from the toggle (View Transitions). */
+@import "./lib/styles/theme-transition.css";
 
 @theme {
 	--font-sans:
@@ -41,30 +43,198 @@
 	/* The one layout breakpoint: desktop layout from 821px (≤820px is the phone/menu layout).
 	   Usage, mobile-first: `desk:flex-row`. */
 	--breakpoint-desk: 821px;
+
+	/* The site's one UI easing (ease-out-cubic). Its JS twin is `ease` in src/lib/motion.ts. */
+	--ease-smooth: cubic-bezier(0.33, 1, 0.68, 1);
+
+	/* Motion. Each animation is a Tailwind token (animate-*); its @keyframes sit here so Tailwind
+	   only emits the ones in use. Delays are baked in where a stagger needs them. */
+	--animate-rise-1: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 0.05s both;
+	--animate-rise-3: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 0.19s both;
+	--animate-rise-4: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 0.26s both;
+	/* The h1 block slides without fading: an element that starts at opacity 0 isn't counted as LCP. */
+	--animate-rise-lcp: rise-lcp 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 0.12s both;
+	--animate-fade-in: fade-in 1.4s ease 0.2s both;
+	--animate-shimmer: shimmer 1.6s linear infinite;
+	--animate-badge-spin: badge-spin 24s linear infinite;
+	--animate-orb-pulse: orb-pulse 1.6s ease-in-out infinite;
+	/* Intro loader (IntroLoader.svelte): letters rise, the full stop lands, the line fills, then
+	   the content lifts and the panel leaves like a curtain. */
+	--animate-ld-rise-a: ld-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards;
+	--animate-ld-rise-s: ld-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards;
+	--animate-ld-drop: ld-drop 0.75s cubic-bezier(0.3, 0.6, 0.3, 1) 0.5s forwards;
+	--animate-ld-name: ld-fade 0.5s ease 0.65s forwards;
+	--animate-ld-fill: ld-fill 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.25s forwards;
+	--animate-ld-fill-end: ld-fill-end 0.2s ease-out forwards;
+	--animate-ld-inner-out: ld-inner-out 0.5s cubic-bezier(0.76, 0, 0.24, 1) 0.1s forwards;
+	--animate-ld-lift: ld-lift 0.75s cubic-bezier(0.76, 0, 0.24, 1) 0.22s forwards;
+	/* Mobile menu: the panel fades in; its links drop in, staggered. */
+	--animate-menu-in: menu-in 0.22s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+	--animate-menu-item-in: menu-item-in 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+	/* Footer "Back to top": the arrow loops up on hover/focus, and launches on click. */
+	--animate-arrow-loop: arrow-loop 0.9s cubic-bezier(0.5, 0, 0.2, 1) infinite;
+	--animate-arrow-launch: arrow-launch 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+
+	@keyframes rise {
+		from {
+			opacity: 0;
+			transform: translateY(14px);
+		}
+		to {
+			opacity: 1;
+			transform: none;
+		}
+	}
+	@keyframes rise-lcp {
+		from {
+			transform: translateY(14px);
+		}
+		to {
+			transform: none;
+		}
+	}
+	@keyframes fade-in {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+	@keyframes ld-rise {
+		to {
+			transform: translateY(0);
+		}
+	}
+	@keyframes ld-drop {
+		0% {
+			opacity: 0;
+			transform: translateY(-34px);
+		}
+		30% {
+			opacity: 1;
+		}
+		55% {
+			transform: translateY(0) scale(1.18, 0.8);
+		}
+		70% {
+			transform: translateY(-5px) scale(0.94, 1.07);
+		}
+		85% {
+			transform: translateY(0) scale(1.04, 0.96);
+		}
+		100% {
+			opacity: 1;
+			transform: translateY(0) scale(1, 1);
+		}
+	}
+	@keyframes ld-fade {
+		to {
+			opacity: 1;
+		}
+	}
+	@keyframes ld-fill {
+		to {
+			transform: scaleX(0.85);
+		}
+	}
+	@keyframes ld-fill-end {
+		from {
+			transform: scaleX(0.85);
+		}
+		to {
+			transform: scaleX(1);
+		}
+	}
+	@keyframes ld-inner-out {
+		to {
+			opacity: 0;
+			transform: translateY(-40px);
+		}
+	}
+	@keyframes ld-lift {
+		to {
+			transform: translateY(-100%);
+			border-bottom-left-radius: 50% 18%;
+			border-bottom-right-radius: 50% 18%;
+		}
+	}
+	@keyframes menu-in {
+		from {
+			opacity: 0;
+		}
+	}
+	@keyframes menu-item-in {
+		from {
+			opacity: 0;
+			transform: translateY(-6px);
+		}
+	}
+	@keyframes arrow-loop {
+		0% {
+			transform: translateY(0);
+		}
+		45% {
+			transform: translateY(-180%);
+		}
+		46% {
+			transform: translateY(180%);
+		}
+		100% {
+			transform: translateY(0);
+		}
+	}
+	@keyframes arrow-launch {
+		0% {
+			transform: translateY(0);
+		}
+		15% {
+			transform: translateY(3px);
+		}
+		50% {
+			transform: translateY(-220%);
+			opacity: 1;
+		}
+		51% {
+			transform: translateY(220%);
+			opacity: 0;
+		}
+		100% {
+			transform: translateY(0);
+			opacity: 1;
+		}
+	}
+	@keyframes orb-pulse {
+		50% {
+			opacity: 0.25;
+		}
+	}
+	@keyframes badge-spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+	/* Image skeleton sweep (see src/lib/ui.ts → imgFrame) */
+	@keyframes shimmer {
+		from {
+			background-position: 110% 0;
+		}
+		to {
+			background-position: -110% 0;
+		}
+	}
 }
 
-/* Element defaults live in the base layer so Tailwind utilities can override them. */
+/* App states set on <html> by the head script in app.html (see IntroLoader.svelte). */
+@custom-variant loader-on (:root[data-loader="on"] &);
+@custom-variant loader-out (:root[data-loader="out"] &);
+
+/* Element defaults — Tailwind's base layer, so utilities override them. Everything else is
+   Tailwind classes in the markup (html/body classes are in app.html). */
 @layer base {
 	:root {
 		/* Sticky header: 64px bar + 1px border. Sizes the snap offset and the full-screen sections. */
 		--header-h: 65px;
-	}
-	/* The document is the one scroll container: it snaps each section's top to just under the
-	   sticky header. Sections taller than the screen (Projects deck, Skills) scroll freely inside
-	   — browsers only snap at their edges — so nothing is ever out of reach. */
-	html {
-		scroll-behavior: smooth;
-		scroll-padding-top: var(--header-h);
-		scroll-snap-type: y mandatory;
-	}
-	body {
-		margin: 0;
-		background: var(--color-paper);
-		color: var(--color-body);
-		font-family: var(--font-sans);
-		font-size: 17px;
-		line-height: 1.7;
-		-webkit-font-smoothing: antialiased;
 	}
 	a {
 		color: var(--color-accent-700);
@@ -73,162 +243,27 @@
 	a:hover {
 		color: var(--color-accent-800);
 	}
-	::selection {
-		background: rgba(249, 115, 22, 0.24);
-		color: var(--color-ink);
-	}
-	:where(a, button):focus-visible {
-		outline: 2px solid var(--color-accent-600);
-		outline-offset: 3px;
-		border-radius: 4px;
-	}
-}
-
-/* Entrance motion used in the hero (stagger with .d1–.d5) */
-.rise {
-	animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-.d1 {
-	animation-delay: 0.05s;
-}
-.d2 {
-	animation-delay: 0.12s;
-}
-.d3 {
-	animation-delay: 0.19s;
-}
-.d4 {
-	animation-delay: 0.26s;
-}
-.d5 {
-	animation-delay: 0.33s;
-}
-.fade {
-	animation: fade 1.4s ease 0.2s both;
-}
-/* The h1 block slides without fading: an element that starts at opacity 0 isn't counted as LCP. */
-.rise-lcp {
-	animation: rise-lcp 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-@keyframes rise-lcp {
-	from {
-		transform: translateY(14px);
-	}
-	to {
-		transform: none;
-	}
-}
-@keyframes rise {
-	from {
-		opacity: 0;
-		transform: translateY(14px);
-	}
-	to {
-		opacity: 1;
-		transform: none;
-	}
-}
-@keyframes fade {
-	from {
-		opacity: 0;
-	}
-	to {
-		opacity: 1;
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	/* No smooth scrolling, and snapping only when you stop close to a section (no forced pulls). */
-	html {
-		scroll-behavior: auto;
-		scroll-snap-type: y proximity;
-	}
-	.rise,
-	.rise-lcp,
-	.fade {
-		animation: none;
-	}
-	*,
-	*::before,
-	*::after {
-		transition-duration: 0.01ms !important;
-	}
-}
-
-/* ── Layout + shared interaction styles (values from reference/design-source/Main.dc.html) ── */
-@layer components {
-	/* Full-screen sections: at least the screen below the header (svh: stable while mobile
-	   toolbars collapse), content centred vertically, and free to grow when it needs more room. */
-	main > section {
-		min-height: calc(100svh - var(--header-h));
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		scroll-snap-align: start;
-	}
-	/* A flex column would shrink-wrap the centred column; keep it full width. */
-	main > section > .wrap {
-		width: 100%;
-	}
-
-	.wrap {
-		max-width: 1320px;
-		margin-inline: auto;
-		padding-inline: clamp(20px, 5vw, 48px);
-	}
-	.section-pad {
-		padding-block: clamp(40px, 5vw, 68px);
-	}
-	.mono {
-		font-family: var(--font-mono);
-	}
-
-	/* Pills: ink → accent fill on hover; outline → ink border on hover */
-	.btn-primary,
-	.btn-ghost {
-		transition:
-			background-color 0.18s ease,
-			border-color 0.18s ease,
-			color 0.18s ease,
-			transform 0.18s ease;
-	}
-	.btn-primary:hover:not([aria-disabled="true"]) {
-		background-color: var(--color-accent);
-		color: var(--color-on-accent);
-		transform: translateY(-1px);
-	}
-	.btn-ghost:hover:not([aria-disabled="true"]) {
-		border-color: var(--color-ink);
-		color: var(--color-ink);
-	}
-	.icon-link,
-	.textlink {
-		transition:
-			color 0.15s ease,
-			transform 0.15s ease;
-	}
-	.icon-link:hover:not([aria-disabled="true"]),
-	.textlink:hover:not([aria-disabled="true"]) {
-		color: var(--color-accent-700);
-	}
-	.icon-link:hover:not([aria-disabled="true"]) {
-		transform: translateY(-2px);
-	}
-
-	/* A link whose target hasn't been supplied yet (see MaybeLink.svelte) */
-	[aria-disabled="true"] {
-		cursor: not-allowed;
-	}
-}
-
-@layer base {
 	button {
 		cursor: pointer;
 		font: inherit;
 	}
-	:where([tabindex]):focus-visible {
+	::selection {
+		background: rgba(249, 115, 22, 0.24);
+		color: var(--color-ink);
+	}
+	:where(a, button, [tabindex]):focus-visible {
 		outline: 2px solid var(--color-accent-600);
 		outline-offset: 3px;
 		border-radius: 4px;
+	}
+}
+
+/* Reduced motion, page-wide: every transition becomes instant. A rule for every element at once
+   can't be a class, so it stays here (per-element animations use motion-reduce: in the markup). */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		transition-duration: 0.01ms !important;
 	}
 }

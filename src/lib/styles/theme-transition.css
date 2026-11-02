@@ -1,0 +1,20 @@
+/*
+ * Theme switch transition (imported in src/app.css after theme.css).
+ *
+ * theme.svelte.ts runs document.startViewTransition() and animates the NEW snapshot's
+ * clip-path from a 0px circle at the toggle to one that covers the viewport.
+ * These rules switch off the browser's default cross-fade so only the circle is seen.
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation: none;
+	mix-blend-mode: normal;
+}
+
+/* Keep the sticky header and anything with its own view-transition-name inside the root
+   snapshot during a theme switch, so the circle reveals the whole page as one image. */
+:root.theme-vt * {
+	view-transition-name: none !important;
+}
+
+/* The fallback cross-fade (.theme-switching) is defined in theme.css. */

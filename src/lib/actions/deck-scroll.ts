@@ -1,4 +1,5 @@
 import type { Action } from 'svelte/action';
+import { ease } from '$lib/motion';
 
 /**
  * Scroll-driven "deck" for the Projects section (from the approved design).
@@ -41,8 +42,11 @@ export const deckScroll: Action<HTMLElement> = (node) => {
 			const stuckTop = Number.parseFloat(getComputedStyle(card).top) || 0;
 			const originY = Math.max(0, headerBottom - stuckTop);
 			card.style.transformOrigin = `50% ${originY.toFixed(0)}px`;
-			card.style.transform = `scale(${(1 - 0.05 * p).toFixed(4)})`;
-			card.style.filter = `brightness(${(1 - 0.1 * p).toFixed(3)})`;
+			// Same ease-out as the rest of the UI: the covered card recedes promptly as the next one
+			// arrives, then settles — rather than shrinking at a constant rate.
+			const k = ease(p);
+			card.style.transform = `scale(${(1 - 0.05 * k).toFixed(4)})`;
+			card.style.filter = `brightness(${(1 - 0.1 * k).toFixed(3)})`;
 		});
 	};
 	const schedule = () => {

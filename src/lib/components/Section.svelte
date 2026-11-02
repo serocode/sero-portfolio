@@ -1,6 +1,8 @@
 <!-- Section frame: label row + h2 + optional sub, inside the content column. -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { reveal } from '$lib/actions/reveal';
+	import { fullScreen, revealItem, sectionPad, wrap } from '$lib/ui';
 	import SectionLabel from './SectionLabel.svelte';
 
 	let {
@@ -26,37 +28,35 @@
 	} = $props();
 </script>
 
-<section {id} aria-labelledby="{id}-h" class:mist={tone === 'mist'}>
-	<div class="wrap section-pad">
-		<SectionLabel {n} {label} rule={tone === 'mist' ? 'var(--color-line)' : undefined} />
-		<h2 id="{id}-h" class:has-sub={!!sub}>{heading}</h2>
+<section
+	{id}
+	aria-labelledby="{id}-h"
+	class={['group/reveal', fullScreen, tone === 'mist' && 'border-y border-line-soft bg-mist']}
+	use:reveal
+>
+	<!-- On arrival the label, heading, intro and content rise into place, staggered. -->
+	<div class="{wrap} {sectionPad}">
+		<div class={revealItem} style:--reveal-i={0}>
+			<SectionLabel {n} {label} rule={tone === 'mist' ? 'var(--color-line)' : undefined} />
+		</div>
+		<h2
+			id="{id}-h"
+			style:--reveal-i={1}
+			class={[
+				revealItem,
+				'max-w-[760px] text-[clamp(30px,4.2vw,48px)] leading-[1.08] font-semibold tracking-[-0.035em] text-balance text-ink',
+				sub ? 'mb-3.5' : 'mb-12'
+			]}
+		>
+			{heading}
+		</h2>
 		{#if sub}
-			<p class="sub" style:margin-bottom="{subGap}px">{sub}</p>
+			<p class="max-w-[560px] {revealItem}" style:margin-bottom="{subGap}px" style:--reveal-i={2}>
+				{sub}
+			</p>
 		{/if}
-		{@render children?.()}
+		<div class={revealItem} style:--reveal-i={sub ? 3 : 2}>
+			{@render children?.()}
+		</div>
 	</div>
 </section>
-
-<style>
-	.mist {
-		background: var(--color-mist);
-		border-block: 1px solid var(--color-line-soft);
-	}
-	h2 {
-		margin: 0 0 48px;
-		max-width: 760px;
-		font-size: clamp(30px, 4.2vw, 48px);
-		font-weight: 600;
-		line-height: 1.08;
-		letter-spacing: -0.035em;
-		color: var(--color-ink);
-		text-wrap: balance;
-	}
-	h2.has-sub {
-		margin-bottom: 14px;
-	}
-	.sub {
-		margin-top: 0;
-		max-width: 560px;
-	}
-</style>

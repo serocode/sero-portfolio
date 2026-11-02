@@ -1,56 +1,76 @@
 <script lang="ts">
+	import { reveal } from '$lib/actions/reveal';
 	import Icon from '$lib/components/Icon.svelte';
 	import MaybeLink from '$lib/components/MaybeLink.svelte';
 	import Placeholder from '$lib/components/Placeholder.svelte';
 	import SectionLabel from '$lib/components/SectionLabel.svelte';
 	import { contact, site, socials } from '$lib/content/site';
 	import { isMissing } from '$lib/content/types';
+	import { btnPrimaryHover, fullScreen, revealItem, wrap } from '$lib/ui';
+
+	/** A contact list entry; only real links (not disabled placeholders) take the hover colour. */
+	const item =
+		'inline-flex min-h-11 items-center gap-2 text-[14px] text-on-inverse transition-colors duration-150 ease-[ease] not-aria-disabled:hover:text-inverse-accent';
 
 	const email = site.email;
 	const mailto = typeof email === 'string' ? `mailto:${email}` : email;
 </script>
 
-<section id="contact" aria-labelledby="contact-h">
-	<div class="wrap outer">
-		<div class="panel">
+<section id="contact" aria-labelledby="contact-h" class="group/reveal {fullScreen}" use:reveal>
+	<div class="{wrap} pt-[clamp(20px,3vw,36px)] pb-[clamp(40px,5vw,64px)]">
+		<!-- The one inverted panel: dark in light mode, light in dark mode. -->
+		<div
+			class="rounded-[28px] bg-inverse p-[clamp(36px,6vw,80px)] text-inverse-body [&_:focus-visible]:outline-accent {revealItem}"
+		>
 			<SectionLabel n="05" label="Contact" dark />
-			<h2 id="contact-h">{contact.heading}</h2>
-			<p class="body">{contact.body}</p>
+			<h2
+				id="contact-h"
+				class="max-w-[820px] text-[clamp(38px,6.2vw,72px)] leading-[1.02] font-bold tracking-[-0.045em] text-balance text-on-inverse"
+			>
+				{contact.heading}
+			</h2>
+			<p class="mt-6 max-w-[540px] text-[18px] leading-[1.7] text-pretty">{contact.body}</p>
 
-			<div class="cta-row">
-				<MaybeLink href={mailto} class="btn-primary hello" comingSoon="Email address coming soon">
+			<div class="mt-9 flex flex-wrap items-center gap-x-5 gap-y-3.5 text-[15px]">
+				<MaybeLink
+					href={mailto}
+					class="inline-flex min-h-13 items-center gap-2.5 rounded-full bg-on-inverse px-7 text-[15px] font-medium text-inverse {btnPrimaryHover}"
+					comingSoon="Email address coming soon"
+				>
 					<Icon name="mail" size={16} strokeWidth={2} />
 					<span>{contact.cta}</span>
 				</MaybeLink>
 				{#if typeof email === 'string'}
-					<span class="email mono">{email}</span>
+					<span class="font-mono text-[14px] text-on-inverse">{email}</span>
 				{:else}
 					<Placeholder dark text={email.placeholder} />
 				{/if}
 			</div>
 
-			<ul class="list">
+			<ul
+				class="mt-12 flex flex-wrap gap-x-8 gap-y-1 border-t border-inverse-line pt-[22px] text-[14px]"
+			>
 				{#each socials as s (s.label)}
 					<li>
-						<MaybeLink href={s.href} external class="item">
+						<MaybeLink href={s.href} external class={item}>
 							<span>{s.label}</span>
 							{#if s.handle !== undefined}
 								{#if isMissing(s.handle)}
-									<Placeholder dark text={s.handle.placeholder} />
+									<Placeholder dark small text={s.handle.placeholder} />
 								{:else}
-									<span class="handle mono">{s.handle}</span>
+									<span class="font-mono text-[12px] text-inverse-muted">{s.handle}</span>
 								{/if}
 							{/if}
 						</MaybeLink>
 					</li>
 				{/each}
 				<li>
-					<MaybeLink href={site.resume} external class="item" comingSoon="Résumé PDF coming soon">
+					<MaybeLink href={site.resume} external class={item} comingSoon="Résumé PDF coming soon">
 						<span>Résumé</span>
 						{#if isMissing(site.resume)}
-							<Placeholder dark text={site.resume.placeholder} />
+							<Placeholder dark small text={site.resume.placeholder} />
 						{:else}
-							<span class="handle mono">PDF</span>
+							<span class="font-mono text-[12px] text-inverse-muted">PDF</span>
 						{/if}
 					</MaybeLink>
 				</li>
@@ -58,93 +78,3 @@
 		</div>
 	</div>
 </section>
-
-<style>
-	.outer {
-		padding-top: clamp(20px, 3vw, 36px);
-		padding-bottom: clamp(40px, 5vw, 64px);
-	}
-	.panel {
-		padding: clamp(36px, 6vw, 80px);
-		background: var(--color-inverse);
-		border-radius: 28px;
-		color: var(--color-inverse-body);
-	}
-	h2 {
-		margin: 0;
-		max-width: 820px;
-		font-size: clamp(38px, 6.2vw, 72px);
-		font-weight: 700;
-		line-height: 1.02;
-		letter-spacing: -0.045em;
-		color: var(--color-on-inverse);
-		text-wrap: balance;
-	}
-	.body {
-		margin: 24px 0 0;
-		max-width: 540px;
-		font-size: 18px;
-		line-height: 1.7;
-		text-wrap: pretty;
-	}
-	.cta-row {
-		margin-top: 36px;
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 14px 20px;
-		font-size: 15px;
-	}
-	.cta-row :global(.hello) {
-		display: inline-flex;
-		align-items: center;
-		gap: 10px;
-		min-height: 52px;
-		padding: 0 28px;
-		background: var(--color-on-inverse);
-		border: 0;
-		border-radius: 999px;
-		font-size: 15px;
-		font-weight: 500;
-		color: var(--color-inverse);
-	}
-	.email {
-		font-size: 14px;
-		color: var(--color-on-inverse);
-	}
-	.list {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 4px 32px;
-		margin: 48px 0 0;
-		padding: 22px 0 0;
-		list-style: none;
-		border-top: 1px solid var(--color-inverse-line);
-		font-size: 14px;
-	}
-	.list :global(.item) {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		min-height: 44px;
-		padding: 0;
-		background: none;
-		border: 0;
-		font-size: 14px;
-		color: var(--color-on-inverse);
-		transition: color 0.15s ease;
-	}
-	.list :global(a.item:hover) {
-		color: var(--color-inverse-accent);
-	}
-	.handle {
-		font-size: 12px;
-		color: var(--color-inverse-muted);
-	}
-	.list :global(.ph) {
-		font-size: 12px;
-	}
-	.panel :global(:focus-visible) {
-		outline-color: var(--color-accent);
-	}
-</style>

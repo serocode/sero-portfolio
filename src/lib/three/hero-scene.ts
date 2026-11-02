@@ -1,5 +1,5 @@
 /**
- * Hero 3D scene — ported 1:1 from the approved design (reference/design-source/Main.dc.html → buildScene).
+ * Hero 3D scene — ported 1:1 from the approved design prototype.
  * A breathing sphere of 4,200 points (grey → orange where the ripple peaks), a dotted orbit ring,
  * and an orange comet with a fading trail that circles the ring. Follows the pointer gently.
  *
