@@ -8,8 +8,17 @@
 	let {
 		size = 20,
 		class: cls = '',
-		tone = 'body'
-	}: { size?: number; class?: string; tone?: 'body' | 'muted' } = $props();
+		tone = 'body',
+		draft,
+		itemDraft
+	}: {
+		size?: number;
+		class?: string;
+		tone?: 'body' | 'muted';
+		/** Live-drafting labels (LiveDrafting.svelte): the whole list, or each icon link. */
+		draft?: string;
+		itemDraft?: string;
+	} = $props();
 
 	const items = heroSocials
 		.map((icon) => socials.find((s) => s.icon === icon))
@@ -17,13 +26,14 @@
 </script>
 
 <!-- Preflight already resets list margins/bullets, so callers position it with utilities (e.g. -ml-3). -->
-<ul class="socials flex items-center gap-0.5 {cls}" aria-label="Social links">
+<ul class="socials flex items-center gap-0.5 {cls}" aria-label="Social links" data-draft={draft}>
 	{#each items as s (s.icon)}
 		<li>
 			<MaybeLink
 				href={s.href}
 				label={s.label}
 				external
+				draft={itemDraft}
 				class="flex size-11 items-center justify-center {tone === 'muted'
 					? 'text-muted'
 					: 'text-body'} {iconLink}"

@@ -10,7 +10,15 @@
 	const sub = `${spellCap(projects.length)} projects, one card each — keep scrolling and the next one slides in over the last.`;
 </script>
 
-<Section id="projects" n="03" label="Projects" heading="Things I've built." {sub} tone="mist">
+<Section
+	id="projects"
+	n="03"
+	label="Projects"
+	heading="Things I've built."
+	{sub}
+	tone="mist"
+	draftCursors={3}
+>
 	<div class="flex flex-col gap-[72px] max-desk:gap-6" use:deckScroll>
 		{#each projects as project, i (project.id)}
 			<ProjectCard {project} index={i} total={projects.length} />

@@ -23,6 +23,7 @@
 	onclick={() => theme.toggle(el)}
 	aria-label="Switch to {next} theme"
 	title="Switch to {next} theme"
+	data-draft="Toggle"
 >
 	<svg
 		class="{icon} [transform:rotate(-90deg)_scale(0.4)] opacity-0 dark:transform-none dark:opacity-100"

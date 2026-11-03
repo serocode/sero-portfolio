@@ -53,19 +53,27 @@
 	sub={skillsIntro.sub}
 	subGap={32}
 >
-	<div class="mb-5 flex flex-wrap gap-2" role="group" aria-label="Show the stack of one project">
+	<div
+		class="mb-5 flex flex-wrap gap-2"
+		role="group"
+		aria-label="Show the stack of one project"
+		data-draft="Filters"
+		data-draft-fit
+	>
 		<button
 			type="button"
 			class={chip}
+			data-draft="Chip"
 			aria-pressed={selected === null}
 			onclick={() => (selected = null)}
 		>
 			All projects
 		</button>
-		{#each projects as p (p.id)}
+		{#each projects as p, i (p.id)}
 			<button
 				type="button"
 				class={chip}
+				data-draft={i < 1 ? 'Chip' : undefined}
 				aria-pressed={selected === p.id}
 				onclick={() => pick(p.id)}
 			>
@@ -78,6 +86,7 @@
 		<div
 			class="{pad} flex flex-wrap items-baseline gap-x-3.5 gap-y-1 border-b border-line bg-mist py-[18px]"
 			aria-live="polite"
+			data-draft="Readout"
 		>
 			<span class="text-[17px] font-semibold tracking-[-0.01em] text-ink">{headline}</span>
 			<span class="font-mono text-[12px] text-muted">{detail}</span>
@@ -108,7 +117,7 @@
 			<span class="text-right tracking-[0.1em] uppercase">Used</span>
 		</div>
 
-		{#each skillGroups as group (group.label)}
+		{#each skillGroups as group, g (group.label)}
 			<div>
 				<h3
 					class="{pad} pt-[18px] pb-1.5 font-mono text-[11px] leading-[1.4] font-medium tracking-[0.12em] text-accent-700 uppercase"
@@ -116,10 +125,11 @@
 					{group.label}
 				</h3>
 				<ul>
-					{#each group.tools as tool (tool.name)}
+					{#each group.tools as tool, t (tool.name)}
 						{@const hit = selected !== null && tool.usedIn.includes(selected)}
 						{@const miss = selected !== null && !hit}
 						<li
+							data-draft={g === 0 && t < 3 ? 'Row' : undefined}
 							class="{grid} {pad} min-h-11 border-t border-line-soft transition-colors duration-200 ease-[ease] hover:bg-[color-mix(in_srgb,var(--color-mist)_55%,var(--color-surface))]"
 						>
 							<!-- Rows the selected project doesn't use: dots + count drop to 30%; the name dims to

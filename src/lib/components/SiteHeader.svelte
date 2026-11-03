@@ -92,6 +92,11 @@
 		'site-header sticky top-0 z-20 border-b border-line-soft [backdrop-filter:saturate(1.4)_blur(12px)]',
 		open ? 'bg-surface' : 'bg-[color-mix(in_srgb,var(--color-paper)_86%,transparent)]'
 	]}
+	data-draft-group
+	data-draft-local
+	data-draft-autoplay="0.2"
+	data-draft-cursors="2"
+	data-draft-inset="0"
 >
 	<div class="{wrap} flex h-16 items-center justify-between gap-6 max-desk:px-5">
 		<a
@@ -99,13 +104,14 @@
 			class="brand flex min-h-11 items-center gap-3 text-ink"
 			aria-label="{site.name} — back to top"
 			onclick={() => (open = false)}
+			data-draft="Logo"
 		>
 			<Logo size={34} decorative />
 			<span class="text-[15px] font-semibold tracking-[-0.01em]">{site.name}</span>
 		</a>
 
 		<nav class="flex items-center gap-8 max-desk:hidden" aria-label="Primary">
-			<ol class="flex items-center gap-7">
+			<ol class="flex items-center gap-7" data-draft="Nav">
 				{#each nav as item (item.id)}
 					<li>
 						<a
@@ -136,6 +142,7 @@
 					class="inline-flex min-h-11 items-center gap-2 rounded-full border border-line-strong bg-surface px-4 text-[13px] font-medium text-strong {btnGhostHover}"
 					external
 					comingSoon={resumeSoon}
+					draft="Résumé"
 				>
 					<Icon name="download" size={14} strokeWidth={2} />
 					<span>Résumé</span>
@@ -153,6 +160,7 @@
 				aria-expanded={open}
 				aria-controls="mobile-menu"
 				onclick={() => (open = !open)}
+				data-draft="Menu"
 			>
 				<Icon name={open ? 'close' : 'menu'} size={20} strokeWidth={2} />
 			</button>

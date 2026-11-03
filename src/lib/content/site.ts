@@ -8,11 +8,16 @@ export const site = {
 		'Anthony Serojales — software developer in the Philippines building full-stack web applications. HR by role, developer by practice.',
 	ogDescription: 'Building thoughtful digital experiences. HR by role, developer by practice.',
 	/** Set this once the domain is known; used for canonical + og:url. */
-	url: missing('[site URL]') as string | Missing,
-	email: missing('[your@email]') as string | Missing,
+	url: 'serocode.vercel.app' as string | Missing,
+	email: 'gaserojales.dev@gmail.com' as string | Missing,
 	resume: missing('[résumé PDF]') as string | Missing,
-	/** Put the file in static/images/ and set e.g. '/images/anthony.webp'. */
-	photo: null as string | null
+	/** About card photo (static/images/). `null` shows the placeholder. */
+	photo: {
+		src: '/images/anthony.webp',
+		width: 768,
+		height: 1024,
+		alt: 'Anthony Serojales on a beach in sunglasses, smiling and giving a thumbs-up'
+	} as { src: string; width: number; height: number; alt: string } | null
 };
 
 export const hero = {
@@ -28,14 +33,18 @@ export const hero = {
 
 export const socials: (Link & { icon: 'github' | 'facebook' | 'discord' | 'linkedin' })[] = [
 	{ label: 'GitHub', icon: 'github', href: 'https://github.com/serocode', handle: '/serocode' },
-	{ label: 'Facebook', icon: 'facebook', href: missing('[profile]'), handle: missing('[profile]') },
+	{
+		label: 'Facebook',
+		icon: 'facebook',
+		href: 'https://www.facebook.com/skiny.2013',
+		handle: '/skiny.2013'
+	},
 	{
 		label: 'Discord',
 		icon: 'discord',
-		href: missing('[server or handle]'),
-		handle: missing('[server or handle]')
-	},
-	{ label: 'LinkedIn', icon: 'linkedin', href: missing('[profile]'), handle: missing('[profile]') }
+		href: 'https://discord.com/users/200654637492076544',
+		handle: '_lazytutor'
+	}
 ];
 
 /** Hero + footer show only these three icons; Contact lists all socials plus Résumé. */

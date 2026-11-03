@@ -56,8 +56,12 @@
 					{#if site.photo}
 						<img
 							use:imageState
-							src={site.photo}
-							alt="Portrait of {site.name}"
+							src={site.photo.src}
+							alt={site.photo.alt}
+							width={site.photo.width}
+							height={site.photo.height}
+							loading="lazy"
+							decoding="async"
 							class="block size-full object-cover {imgFade}"
 						>
 					{:else}

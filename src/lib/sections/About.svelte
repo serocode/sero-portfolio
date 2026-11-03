@@ -30,7 +30,7 @@
 	];
 </script>
 
-<Section id="about" n="01" label="About" heading={about.heading}>
+<Section id="about" n="01" label="About" heading={about.heading} draftOrigin="comet">
 	<!-- Card | text: the text column takes all remaining width, so the row spans the content column.
 	     Tablet (≤820px): card beside the text, top-aligned. Phone (<700px): card centred above. -->
 	<div
@@ -43,8 +43,8 @@
 				class="absolute right-0 bottom-[18px] h-[60%] w-[76%] rounded-[24px] bg-[radial-gradient(var(--color-dots)_1.3px,transparent_1.6px)] bg-size-[14px_14px]"
 				aria-hidden="true"
 			></span>
-			<HoloCard />
-			<div class="pointer-events-none absolute right-0 -bottom-3 z-2">
+			<div data-draft="Photo card"><HoloCard /></div>
+			<div class="pointer-events-none absolute right-0 -bottom-3 z-2" data-draft="Badge">
 				<SpinBadge text={about.badge} />
 			</div>
 			<figcaption class="sr-only">
@@ -58,7 +58,7 @@
 			{#each groups as group (group.id)}
 				<div class={group.class}>
 					{#each group.paragraphs as paragraph, i (i)}
-						<p>
+						<p data-draft="Paragraph" data-draft-text>
 							{#each parseEmphasis(paragraph) as part, j (j)}
 								{#if part.strong}
 									<strong class="font-medium text-ink">{part.value}</strong>
@@ -70,7 +70,11 @@
 					{/each}
 				</div>
 			{/each}
-			<p class="mt-2 inline-flex items-center gap-2.5 font-mono text-[12px] text-muted">
+			<p
+				class="mt-2 inline-flex items-center gap-2.5 font-mono text-[12px] text-muted"
+				data-draft="Hint"
+				data-draft-text
+			>
 				<span class="h-0.5 w-[22px] bg-accent" aria-hidden="true"></span>{about.hint}
 			</p>
 		</div>

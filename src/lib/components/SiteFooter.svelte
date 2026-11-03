@@ -38,22 +38,32 @@
 
 <!-- Last snap point is the page's bottom edge, so the footer stays reachable under mandatory
      snapping. Phones/tablets: one centred column — socials, back to top, then the copyright. -->
-<footer class="snap-end border-t border-line">
+<footer
+	class="snap-end border-t border-line"
+	data-draft-group
+	data-draft-start="top bottom"
+	data-draft-cursors="2"
+>
 	<div
 		class="{wrap} flex flex-wrap items-center justify-between gap-x-8 gap-y-3 py-6 text-[13px] text-muted max-desk:flex-col max-desk:justify-center max-desk:gap-3.5 max-desk:pt-7 max-desk:pb-[calc(28px_+_env(safe-area-inset-bottom,0px))] max-desk:text-center"
 	>
-		<p class="copy inline-flex items-center gap-2.5 max-desk:order-1">
+		<p
+			class="copy inline-flex items-center gap-2.5 max-desk:order-1"
+			data-draft="Credit"
+			data-draft-text
+		>
 			<Logo size={24} decorative /><span>{site.name} · © {year}</span>
 		</p>
 		<div
 			class="flex flex-wrap items-center gap-1 max-desk:flex-col max-desk:justify-center max-desk:gap-3"
 		>
-			<SocialLinks size={18} tone="muted" />
+			<SocialLinks size={18} tone="muted" itemDraft="Icon" />
 			<span class="mx-2.5 h-[18px] w-px bg-line max-desk:hidden" aria-hidden="true"></span>
 			<!-- Pill + round arrow badge. Hover (mouse) / keyboard focus: lift, accent badge, arrow loops
 			     up. Press + launch (touch too): the arrow shoots up and drops back in. -->
 			<a
 				href="#top"
+				data-draft="Back to top"
 				class={[
 					'top group inline-flex min-h-11 items-center gap-2.5 rounded-full border border-line bg-surface py-1 pr-1 pl-4 font-medium text-strong [-webkit-tap-highlight-color:transparent] [transition:border-color_0.2s_ease,color_0.2s_ease,transform_0.2s_ease,box-shadow_0.2s_ease]',
 					'hover:border-ink hover:text-ink hover:shadow-[0_10px_24px_-14px_rgb(var(--shadow-rgb)/calc(0.35*var(--shadow-k)))] hover:[transform:translateY(-2px)] focus-visible:rounded-full focus-visible:border-ink focus-visible:text-ink active:[transform:scale(0.97)] motion-reduce:transform-none motion-reduce:hover:transform-none',

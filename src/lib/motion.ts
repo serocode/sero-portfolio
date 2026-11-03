@@ -88,6 +88,8 @@ export class HeightTween {
 			el.removeEventListener('transitionend', this.#done as (e: TransitionEvent) => void);
 			this.#done = null;
 			end();
+			// The page's layout moved: overlays that measured it (live drafting) re-measure.
+			window.dispatchEvent(new Event('layout-settled'));
 		};
 		el.addEventListener('transitionend', this.#done);
 	}

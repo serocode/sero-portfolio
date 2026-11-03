@@ -73,18 +73,26 @@
 <section
 	class="relative overflow-hidden border-b border-line-soft {fullScreen}"
 	aria-labelledby="hero-name"
+	data-draft-group
+	data-draft-origin="comet"
+	data-draft-autoplay="0.5"
+	data-draft-cursors="5"
 >
 	<div
 		class="{wrap} flex flex-col pb-8 desk:flex-row desk:flex-wrap-reverse desk:items-center desk:gap-x-6 desk:gap-y-2 desk:pt-[clamp(20px,3vw,36px)] desk:pb-[clamp(36px,4.5vw,56px)]"
 	>
 		<div class="flex min-w-0 flex-col gap-5 desk:max-w-190 desk:flex-[1_1_480px] desk:gap-7">
-			<p class="animate-rise-1 {hold} font-mono text-[13px] tracking-[0.02em] text-accent-700">
+			<p
+				class="animate-rise-1 {hold} font-mono text-[13px] tracking-[0.02em] text-accent-700"
+				data-draft="Eyebrow"
+				data-draft-text
+			>
 				{hero.eyebrow}
 			</p>
 
 			<div class="animate-rise-lcp {hold} flex flex-col gap-1.5 desk:gap-2">
 				<!-- The space between the spans keeps the accessible name "Anthony Serojales." -->
-				<h1 id="hero-name" class="flex flex-col font-bold text-ink">
+				<h1 id="hero-name" class="flex flex-col font-bold text-ink" data-draft="H1" data-draft-text>
 					<span
 						class="text-[clamp(24px,7vw,34px)] leading-[1.1] font-semibold tracking-[-0.03em] desk:text-[clamp(24px,3.3vw,42px)]"
 						>{hero.firstName}</span
@@ -95,6 +103,8 @@
 					>
 				</h1>
 				<p
+					data-draft="Tagline"
+					data-draft-text
 					class="text-[28px] leading-[1.1] font-semibold tracking-[-0.035em] text-balance text-subtle desk:text-[clamp(24px,4.6vw,38px)] desk:leading-[1.08]"
 				>
 					{hero.taglineLead} <span class="text-accent-600">{hero.taglineAccent}</span>
@@ -103,6 +113,8 @@
 
 			<!-- ~2 balanced lines from 1280px up (the copy is ~1330px long on one line at 18px). -->
 			<p
+				data-draft="Intro"
+				data-draft-text
 				class="hero-intro animate-rise-3 {hold} text-[15px] leading-[1.65] text-pretty desk:max-w-185 desk:text-[18px] desk:leading-[1.7] desk:text-balance"
 			>
 				{hero.intro}
@@ -113,6 +125,7 @@
 			>
 				<a
 					href="#contact"
+					data-draft="Button"
 					class="inline-flex min-h-12.5 flex-1 items-center justify-center gap-2.5 rounded-full bg-inverse px-6.5 text-[15px] font-medium text-on-inverse transition duration-200 hover:-translate-y-px hover:bg-accent hover:text-on-accent desk:min-h-13 desk:flex-none"
 				>
 					<span>Get in touch</span>
@@ -125,6 +138,7 @@
 					class="inline-flex min-h-12.5 items-center justify-center gap-2 rounded-full border border-line-strong bg-transparent px-5 text-[15px] font-medium text-strong transition-colors not-aria-disabled:hover:border-ink not-aria-disabled:hover:text-accent-700 desk:min-h-13 desk:border-0 desk:px-2"
 					external
 					comingSoon="Résumé PDF coming soon"
+					draft="Link"
 				>
 					<span>Résumé</span>
 					<span class="hidden desk:inline-flex"
@@ -132,7 +146,7 @@
 					>
 				</MaybeLink>
 				<span class="hidden h-5.5 w-px bg-line desk:block" aria-hidden="true"></span>
-				<SocialLinks class="-ml-3 basis-full desk:ml-0 desk:basis-auto" />
+				<SocialLinks class="-ml-3 basis-full desk:ml-0 desk:basis-auto" draft="Socials" />
 			</div>
 		</div>
 
@@ -154,6 +168,7 @@
 			>
 			<canvas
 				bind:this={canvas}
+				data-draft="Canvas"
 				class={[
 					'relative block size-full transition-opacity duration-600 ease-[ease]',
 					scene3d === 'ready' ? 'opacity-100' : 'opacity-0'

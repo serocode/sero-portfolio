@@ -21,8 +21,10 @@ import {
 	PointsMaterial,
 	Scene,
 	ShaderMaterial,
+	Vector3,
 	WebGLRenderer
 } from 'three';
+import { comet as cometPos } from './comet';
 
 export type HeroScene = { dispose: () => void };
 
@@ -214,6 +216,28 @@ export function createHeroScene(canvas: HTMLCanvasElement): HeroScene {
 		tx = e.clientX / (window.innerWidth || 1) - 0.5;
 		ty = e.clientY / (window.innerHeight || 1) - 0.5;
 	};
+	// Comet head → page coordinates: the launch point of the live-drafting cursors (comet.ts).
+	// The canvas rect is re-read every 20 frames; the head is projected every frame.
+	const headV = new Vector3();
+	const cvDoc = { x: 0, y: 0, w: 1, h: 1 };
+	let frameN = 0;
+	const publishComet = () => {
+		if (frameN++ % 20 === 0) {
+			const r = canvas.getBoundingClientRect();
+			cvDoc.x = r.left + window.scrollX;
+			cvDoc.y = r.top + window.scrollY;
+			cvDoc.w = r.width;
+			cvDoc.h = r.height;
+		}
+		const i = (TR - 1) * 3;
+		headV.set(tp[i], tp[i + 1], tp[i + 2]);
+		comet.localToWorld(headV);
+		headV.project(camera);
+		cometPos.x = cvDoc.x + ((headV.x + 1) / 2) * cvDoc.w;
+		cometPos.y = cvDoc.y + ((1 - headV.y) / 2) * cvDoc.h;
+		cometPos.ready = true;
+	};
+
 	const clock = new Clock();
 	const frame = () => {
 		const dt = Math.min(clock.getDelta(), 0.05);
@@ -226,6 +250,7 @@ export function createHeroScene(canvas: HTMLCanvasElement): HeroScene {
 		group.rotation.x = 0.18 + rx;
 		placeComet(t);
 		renderer.render(scene, camera);
+		publishComet();
 		raf = visible ? requestAnimationFrame(frame) : 0;
 	};
 	const still = () => {
@@ -284,6 +309,7 @@ export function createHeroScene(canvas: HTMLCanvasElement): HeroScene {
 			sg.dispose();
 			sm.dispose();
 			renderer.dispose();
+			cometPos.ready = false;
 		}
 	};
 }

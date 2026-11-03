@@ -57,6 +57,11 @@ rather than redesigning.
    is the `ease-smooth` token). Swapping content for the next uses `swap` (direction-aware slide,
    no text-on-text) in a one-cell grid plus `HeightTween` so containers resize smoothly; sections
    arrive with `use:reveal` + `revealItem` (src/lib/ui.ts).
+   Live drafting (`LiveDrafting.svelte` + `src/lib/motion/live-drafting.js`, GSAP lazy-loaded, off
+   with reduced motion): regions carry `data-draft-group`, elements `data-draft="Label"` (+
+   `data-draft-text` / `data-draft-fit`) — mark new UI the same way. Its overlay is clipped to
+   `<body>`, which therefore stays `relative`. Dispatch `layout-settled` on `window` after
+   animated layout changes so it re-measures (`HeightTween` already does).
 5. **Performance:** images use the `width`/`height` from the data + `loading="lazy"` below the fold;
    three.js not in the initial bundle; pause the WebGL loop when the hero is off-screen (already
    done in `hero-scene.ts`). Lighthouse ≥ 95 on Performance, Accessibility, Best Practices, SEO.

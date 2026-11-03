@@ -83,8 +83,11 @@
 	aria-labelledby="{project.id}-title"
 	style:--i={index}
 	use:fitSticky
+	data-draft-group
+	data-draft-card
+	data-draft-cursors="3"
 >
-	<div class="flex flex-wrap items-center justify-between gap-x-5 gap-y-2.5">
+	<div class="flex flex-wrap items-center justify-between gap-x-5 gap-y-2.5" data-draft="Header">
 		<p
 			class="flex flex-wrap items-baseline gap-x-3.5 gap-y-1.5 font-mono text-[12px] tracking-[0.06em] text-muted"
 		>
@@ -126,6 +129,7 @@
 					class="flex gap-1.5 self-start rounded-full bg-chip p-1"
 					role="group"
 					aria-label="{project.title} views"
+					data-draft="Views"
 				>
 					{#each project.views as v, i (v.label)}
 						<button
@@ -142,7 +146,7 @@
 
 			<!-- One grid cell: switching views cross-slides the media while the card glides to its new
 			     height (and, through fit-sticky, its new sticky position). -->
-			<div class="grid items-start [&>*]:[grid-area:1/1]" bind:this={stage}>
+			<div class="grid items-start [&>*]:[grid-area:1/1]" bind:this={stage} data-draft="Media">
 				{#key viewIdx}
 					<div
 						class="flex min-w-0 flex-col gap-3"
@@ -218,7 +222,7 @@
 									aria-label="{project.title} screenshots"
 								>
 									{#each shots as s, i (s.src)}
-										<li>
+										<li data-draft={i < 2 ? 'Thumb' : undefined}>
 											<button
 												type="button"
 												class={[
@@ -257,7 +261,7 @@
 								use:swipe={swipeShots}
 							>
 								{#each shots as s, i (s.src)}
-									<li class="w-1/4 flex-none">
+									<li class="w-1/4 flex-none" data-draft={i < 2 ? 'Thumb' : undefined}>
 										<button
 											type="button"
 											class={[
@@ -331,18 +335,30 @@
 			<h3
 				id="{project.id}-title"
 				class="text-[clamp(28px,3vw,36px)] leading-[1.1] font-bold tracking-[-0.03em] text-ink"
+				data-draft="H3"
+				data-draft-text
 			>
 				{project.title}
 			</h3>
-			<p class="text-[16px] leading-[1.65] text-pretty text-strong">{project.description}</p>
-			<ul class="flex flex-col gap-2 text-[15px] leading-[1.55]">
+			<p
+				class="text-[16px] leading-[1.65] text-pretty text-strong"
+				data-draft="Description"
+				data-draft-text
+			>
+				{project.description}
+			</p>
+			<ul class="flex flex-col gap-2 text-[15px] leading-[1.55]" data-draft="Highlights">
 				{#each project.highlights as h (h)}
 					<li class="flex gap-3">
 						<span class="text-accent-700" aria-hidden="true">–</span><span>{h}</span>
 					</li>
 				{/each}
 			</ul>
-			<ul class="flex flex-wrap gap-2 font-mono text-[12px] text-strong" aria-label="Tech stack">
+			<ul
+				class="flex flex-wrap gap-2 font-mono text-[12px] text-strong"
+				aria-label="Tech stack"
+				data-draft="Stack"
+			>
 				{#each project.stack as t (t)}
 					<li class="rounded-md bg-chip px-2.5 py-1">{t}</li>
 				{/each}
@@ -354,6 +370,7 @@
 							href={l.href}
 							target="_blank"
 							rel="noopener noreferrer"
+							data-draft="Link"
 							class={[
 								'inline-flex min-h-11 items-center gap-2 rounded-full px-[18px] text-[14px] font-medium',
 								l.variant === 'primary'

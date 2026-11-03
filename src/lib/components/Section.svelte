@@ -13,6 +13,8 @@
 		sub,
 		tone = 'paper',
 		subGap = 48,
+		draftCursors = 4,
+		draftOrigin,
 		children
 	}: {
 		id: string;
@@ -24,6 +26,9 @@
 		tone?: 'paper' | 'mist';
 		/** Space under the sub line, px. */
 		subGap?: number;
+		/** Live drafting (LiveDrafting.svelte): cursors working this section, and where the first enters. */
+		draftCursors?: number;
+		draftOrigin?: 'comet';
 		children?: Snippet;
 	} = $props();
 </script>
@@ -33,6 +38,9 @@
 	aria-labelledby="{id}-h"
 	class={['group/reveal', fullScreen, tone === 'mist' && 'border-y border-line-soft bg-mist']}
 	use:reveal
+	data-draft-group
+	data-draft-cursors={draftCursors}
+	data-draft-origin={draftOrigin}
 >
 	<!-- On arrival the label, heading, intro and content rise into place, staggered. -->
 	<div class="{wrap} {sectionPad}">
@@ -41,6 +49,8 @@
 		</div>
 		<h2
 			id="{id}-h"
+			data-draft="H2"
+			data-draft-text
 			style:--reveal-i={1}
 			class={[
 				revealItem,
@@ -51,7 +61,13 @@
 			{heading}
 		</h2>
 		{#if sub}
-			<p class="max-w-[560px] {revealItem}" style:margin-bottom="{subGap}px" style:--reveal-i={2}>
+			<p
+				class="max-w-[560px] {revealItem}"
+				data-draft="Intro"
+				data-draft-text
+				style:margin-bottom="{subGap}px"
+				style:--reveal-i={2}
+			>
 				{sub}
 			</p>
 		{/if}

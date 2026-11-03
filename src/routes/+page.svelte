@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LiveDrafting from '$lib/components/LiveDrafting.svelte';
 	import Seo from '$lib/components/Seo.svelte';
 	import SiteFooter from '$lib/components/SiteFooter.svelte';
 	import SiteHeader from '$lib/components/SiteHeader.svelte';
@@ -29,3 +30,4 @@
 	</main>
 	<SiteFooter />
 </div>
+<LiveDrafting />

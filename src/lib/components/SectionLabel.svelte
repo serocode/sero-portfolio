@@ -11,6 +11,8 @@
 <div
 	class={['flex items-center gap-3.5', dark ? 'mb-6' : 'mb-[18px]']}
 	style:--rule={dark ? 'var(--color-inverse-line)' : rule}
+	data-draft="Eyebrow"
+	data-draft-fit
 >
 	<span
 		class={[

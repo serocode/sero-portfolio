@@ -16,6 +16,7 @@
 		download = false,
 		comingSoon = 'Link coming soon',
 		onclick,
+		draft,
 		children
 	}: {
 		href: string | Missing;
@@ -27,6 +28,8 @@
 		/** Tooltip + accessible description while the target is missing. */
 		comingSoon?: string;
 		onclick?: HTMLAnchorAttributes['onclick'];
+		/** Live-drafting tag label (`data-draft`, see LiveDrafting.svelte). */
+		draft?: string;
 		children: Snippet;
 	} = $props();
 
@@ -42,6 +45,7 @@
 		rel={external ? 'noopener noreferrer' : undefined}
 		download={download || undefined}
 		{onclick}
+		data-draft={draft}
 	>
 		{@render children()}
 		{#if external && !label}
@@ -55,6 +59,7 @@
 		aria-disabled="true"
 		title={comingSoon}
 		aria-label={label ? `${label} — ${comingSoon.toLowerCase()}` : undefined}
+		data-draft={draft}
 	>
 		{@render children()}
 		{#if !label}

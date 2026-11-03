@@ -106,6 +106,7 @@
 					]}
 					aria-selected={shown === i}
 					aria-controls="ap-panel"
+					data-draft="Topic"
 					tabindex={selected === i ? 0 : -1}
 					onclick={() => select(i)}
 					onfocus={() => select(i)}
@@ -141,8 +142,16 @@
 			{/each}
 		</div>
 
-		<!-- biome-ignore lint/a11y/noNoninteractiveTabindex: WAI-ARIA tabs pattern — the tabpanel is focusable -->
-		<div id="ap-panel" class={panel} role="tabpanel" aria-labelledby="ap-tab-{shown}" tabindex="0">
+		<!-- biome-ignore-start lint/a11y/noNoninteractiveTabindex: WAI-ARIA tabs pattern — the tabpanel is focusable -->
+		<div
+			id="ap-panel"
+			class={panel}
+			role="tabpanel"
+			aria-labelledby="ap-tab-{shown}"
+			tabindex="0"
+			data-draft="Panel"
+		>
+			<!-- biome-ignore-end lint/a11y/noNoninteractiveTabindex: WAI-ARIA tabs pattern -->
 			<!-- Decorative numeral drawn from a pseudo-element so it isn't read or contrast-checked as text. -->
 			<span
 				class="pointer-events-none absolute -right-2 -bottom-[0.26em] text-[clamp(120px,16vw,190px)] leading-none font-extrabold tracking-[-0.06em] text-numeral before:content-[attr(data-n)] max-desk:text-[120px]"
@@ -159,6 +168,7 @@
 						type="button"
 						class={navButton}
 						aria-label="Previous topic"
+						data-draft="Button"
 						onclick={() => select(selected - 1, -1)}
 					>
 						<Icon name="arrow-left" size={16} strokeWidth={2} />
@@ -167,6 +177,7 @@
 						type="button"
 						class={navButton}
 						aria-label="Next topic"
+						data-draft="Button"
 						onclick={() => select(selected + 1, 1)}
 					>
 						<Icon name="arrow-right" size={16} strokeWidth={2} />
