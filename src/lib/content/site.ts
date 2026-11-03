@@ -8,7 +8,7 @@ export const site = {
 		'Anthony Serojales — software developer in the Philippines building full-stack web applications. HR by role, developer by practice.',
 	ogDescription: 'Building thoughtful digital experiences. HR by role, developer by practice.',
 	/** Set this once the domain is known; used for canonical + og:url. */
-	url: 'serocode.vercel.app' as string | Missing,
+	url: 'https://serocode.vercel.app' as string | Missing,
 	email: 'gaserojales.dev@gmail.com' as string | Missing,
 	resume: missing('[résumé PDF]') as string | Missing,
 	/** About card photo (static/images/). `null` shows the placeholder. */
