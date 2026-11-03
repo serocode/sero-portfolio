@@ -471,28 +471,34 @@ export function createLiveDrafting(o) {
 		spawn(G, true);
 	}
 
-	// Bring cursors in — at first entry, or when the reader scrolls back to parts not yet drafted.
+	// Bring cursors in: at first entry, when the reader scrolls to parts not yet drafted, and
+	// whenever more of the group is on screen than the active cursors can cover — so every idle
+	// cursor joins in instead of one cursor working through the region alone.
 	function spawn(G, first) {
 		const vis = G.queue.filter((T) => inView(G, T));
 		if (!vis.length) {
-			G.state = G.queue.length ? 'waiting' : 'done';
+			if (first || G.state === 'waiting') G.state = G.queue.length ? 'waiting' : 'done';
 			return;
 		}
-		if (!first) measure(G);
+		const active = G.cursors.filter((C) => C.active).length;
+		const want = vis.length - active;
+		if (want <= 0) return;
+		if (!first && G.live <= 0) measure(G);
 		G.state = 'running';
 		G.svg.style.visibility = 'visible';
 		let k = 0;
-		G.cursors.forEach((C, i) => {
-			if (C.active || k >= vis.length) return;
+		G.cursors.forEach((C) => {
+			if (C.active || k >= want) return;
 			G.live++;
-			const T0 = vis[k++];
-			const e = entryFor(G, first ? C : { i: -1 }, T0);
+			const T0 = vis[Math.min(k, vis.length - 1)];
+			// Only the group's very first cursor bursts out of the origin (the hero comet).
+			const e = entryFor(G, first && C.i === 0 ? C : { i: -1 }, T0);
 			C.x = e.x;
 			C.y = e.y;
 			C.hist = [];
 			C.active = true;
 			calls.push(
-				gsap.delayedCall((i * rand(0.18, 0.5)) / speed, () => {
+				gsap.delayedCall((k * rand(0.15, 0.4)) / speed, () => {
 					if (e.burst) {
 						G.spark.setAttribute('cx', f1(e.x));
 						G.spark.setAttribute('cy', f1(e.y));
@@ -510,6 +516,7 @@ export function createLiveDrafting(o) {
 					next(G, C);
 				})
 			);
+			k++;
 		});
 	}
 
@@ -531,6 +538,8 @@ export function createLiveDrafting(o) {
 			return;
 		}
 		C.wait = 0;
+		// More of the group may have come into view (reveal, layout settle): call in idle cursors.
+		spawn(G, false);
 		calls.push(
 			gsap.delayedCall(rand(0.05, 0.32) / speed, () => {
 				moveTo(C, T.Bl.x, T.Bl.y, () => {
@@ -747,7 +756,7 @@ export function createLiveDrafting(o) {
 		requestAnimationFrame(() => {
 			pend = false;
 			groups.forEach((G) => {
-				if (G.state === 'waiting') spawn(G, false);
+				if (G.state === 'waiting' || G.state === 'running') spawn(G, false);
 			});
 		});
 	};

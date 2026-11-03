@@ -1,4 +1,4 @@
-import { type Link, type Missing, missing } from './types';
+import type { Link, Missing } from './types';
 
 export const site = {
 	name: 'Anthony Serojales',
