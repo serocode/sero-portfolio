@@ -8,15 +8,9 @@
 
 	const year = new Date().getFullYear();
 
-	/** True for one "launch" animation after a click/tap (the arrow shoots up and comes back). */
 	let launching = $state(false);
 	let launchTimer = 0;
 
-	/**
-	 * Without JS this is a plain `#top` link. With JS: play the launch, smooth-scroll to the top
-	 * (instant with reduced motion), and hand keyboard focus to the first control in the header,
-	 * so a keyboard user carries on from the top instead of from the footer.
-	 */
 	function backToTop(event: MouseEvent) {
 		if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
 		event.preventDefault();
@@ -24,7 +18,6 @@
 		if (!reduce) {
 			launching = false;
 			clearTimeout(launchTimer);
-			// Restart the animation on repeated clicks.
 			requestAnimationFrame(() => {
 				launching = true;
 				launchTimer = window.setTimeout(() => (launching = false), 700);
@@ -36,8 +29,6 @@
 	}
 </script>
 
-<!-- Last snap point is the page's bottom edge, so the footer stays reachable under mandatory
-     snapping. Phones/tablets: one centred column — socials, back to top, then the copyright. -->
 <footer
 	class="snap-end border-t border-line"
 	data-draft-group
@@ -59,8 +50,6 @@
 		>
 			<SocialLinks size={18} tone="muted" itemDraft="Icon" />
 			<span class="mx-2.5 h-[18px] w-px bg-line max-desk:hidden" aria-hidden="true"></span>
-			<!-- Pill + round arrow badge. Hover (mouse) / keyboard focus: lift, accent badge, arrow loops
-			     up. Press + launch (touch too): the arrow shoots up and drops back in. -->
 			<a
 				href="#top"
 				data-draft="Back to top"

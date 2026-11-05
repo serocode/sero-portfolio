@@ -8,7 +8,6 @@
 	import { isMissing } from '$lib/content/types';
 	import { btnPrimaryHover, fullScreen, revealItem, wrap } from '$lib/ui';
 
-	/** A contact list entry; only real links (not disabled placeholders) take the hover colour. */
 	const item =
 		'inline-flex min-h-11 items-center gap-2 text-[14px] text-on-inverse transition-colors duration-150 ease-[ease] not-aria-disabled:hover:text-inverse-accent';
 
@@ -25,7 +24,6 @@
 	data-draft-cursors="4"
 >
 	<div class="{wrap} pt-[clamp(20px,3vw,36px)] pb-[clamp(40px,5vw,64px)]">
-		<!-- The one inverted panel: dark in light mode, light in dark mode. -->
 		<div
 			class="rounded-[28px] bg-inverse p-[clamp(36px,6vw,80px)] text-inverse-body [&_:focus-visible]:outline-accent {revealItem}"
 		>

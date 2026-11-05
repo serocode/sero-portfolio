@@ -1,6 +1,3 @@
-// Renders static/og-image.png (1200×630) from the site's own copy, tokens, fonts and "AS." logo.
-// The committed og-image.png is the approved version; re-run only after changing the copy.
-// Run: pnpm og   (needs `pnpm exec playwright install chromium` once)
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
@@ -14,7 +11,6 @@ const mono = font(
 	'@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2'
 );
 
-// The light-theme logo tile (outlined paths — no font needed); favicon.svg is the same artwork.
 const logo = readFileSync(`${root}static/favicon.svg`).toString('base64');
 
 const html = `<!doctype html><html><head><style>

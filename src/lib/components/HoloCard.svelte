@@ -10,21 +10,17 @@
 	const card = about.card;
 	let flipped = $state(false);
 
-	// Holographic card. use:holoTilt writes --bg-x / --bg-y / --holo-o and the tilt transform on
-	// the outer element; the sheen and glare layers read them.
 	const face = 'absolute inset-0 box-border overflow-hidden rounded-[22px] backface-hidden';
 	const sheen =
 		'pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(110deg,#ffb38a_0%,#ffe9a8_7%,#ffc2d1_14%,#d9ccff_21%,#ffb38a_28%)] [background-position:var(--bg-x)_var(--bg-y)] [background-size:240%_240%] transition-opacity duration-[350ms] ease-[ease] dark:opacity-[calc(0.07_+_0.3_*_var(--holo-o))]';
 	const glare =
 		'pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_var(--bg-x)_var(--bg-y),rgba(255,255,255,0.6),rgba(255,255,255,0)_48%)] opacity-(--holo-o) mix-blend-overlay transition-opacity duration-[350ms] ease-[ease]';
 	const pill =
-		'absolute z-2 inline-flex items-center rounded-full px-2.5 py-1 font-mono text-[11px] leading-[1.4]'; // z-2: above the photo's loading skeleton
-	/** Back-face label: sized from the card width (cqi) so nothing clips at 240–300px. */
+		'absolute z-2 inline-flex items-center rounded-full px-2.5 py-1 font-mono text-[11px] leading-[1.4]';
 	const k =
 		'font-mono text-[clamp(10px,4.2cqi,11px)] leading-[1.3] tracking-[0.08em] text-inverse-muted uppercase';
 </script>
 
-<!-- data-cursor: the visitor cursor's tag names the person in the photo (CollabCursor.svelte). -->
 <div
 	data-cursor={site.name}
 	class="holo-tilt [--bg-x:50%] [--bg-y:50%] [--holo-o:0] [transform:perspective(1000px)_rotateX(0deg)_rotateY(0deg)] will-change-transform"
@@ -36,7 +32,6 @@
 		aria-pressed={flipped}
 		onclick={() => (flipped = !flipped)}
 	>
-		<!-- The name says what a click does; the card's content is described by the About figcaption. -->
 		<span class="sr-only">
 			{flipped ? 'Flip the card back to the photo' : 'Flip the photo card to see credentials'}
 		</span>
@@ -47,7 +42,6 @@
 			]}
 			aria-hidden="true"
 		>
-			<!-- Front -->
 			<span
 				class="{face} flex flex-col border border-line bg-surface p-2 shadow-[0_1px_2px_rgb(var(--shadow-rgb)/calc(0.06*var(--shadow-k))),0_32px_64px_-32px_rgb(var(--shadow-rgb)/calc(0.38*var(--shadow-k)))]"
 			>
@@ -83,7 +77,6 @@
 					>
 						<Icon name="map-pin" size={11} strokeWidth={2.4} />{card.location}
 					</span>
-					<!-- A dark scrim in both themes: it sits on the photo, not on the page. -->
 					<span
 						class="{pill} bottom-2.5 left-2.5 gap-1.5 bg-[rgba(13,17,23,0.78)] tracking-normal text-white"
 					>
@@ -103,7 +96,6 @@
 				<span class={glare} aria-hidden="true"></span>
 			</span>
 
-			<!-- Back: a flex column sized from the card width (cqi) so nothing clips at 240–300px. -->
 			<span
 				class="{face} holo-back flex [transform:rotateY(180deg)] flex-col gap-[clamp(8px,4.6cqi,16px)] border border-inverse bg-[linear-gradient(160deg,var(--color-inverse),color-mix(in_srgb,var(--color-inverse)_85%,var(--color-inverse-line)))] px-[clamp(16px,8cqi,22px)] pt-[clamp(16px,8.5cqi,24px)] pb-[clamp(14px,7cqi,20px)] text-inverse-body shadow-[0_32px_64px_-32px_rgb(var(--shadow-rgb)/calc(0.5*var(--shadow-k)))]"
 			>

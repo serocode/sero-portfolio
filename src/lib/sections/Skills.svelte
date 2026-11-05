@@ -1,8 +1,3 @@
-<!--
-  Skills matrix. Built as a CSS grid of rows (not a <table>) to keep the design's layout:
-  the column header + dots are aria-hidden, and each row carries a visually-hidden
-  "Used in …" sentence built from the project titles.
--->
 <script lang="ts">
 	import Section from '$lib/components/Section.svelte';
 	import { projects } from '$lib/content/projects';
@@ -27,7 +22,6 @@
 
 	const filtering = $derived(selected !== null);
 
-	// Shared row/column template: tool name | one column per project | "Used" count.
 	const grid =
 		'grid grid-cols-[minmax(0,1fr)_repeat(var(--n),76px)_52px] items-center gap-x-1 max-desk:grid-cols-[minmax(0,1fr)_repeat(var(--n),26px)_30px] max-desk:gap-x-0.5';
 	const pad = 'px-6 max-desk:px-3.5';
@@ -132,8 +126,6 @@
 							data-draft={g === 0 && t < 3 ? 'Row' : undefined}
 							class="{grid} {pad} min-h-11 border-t border-line-soft transition-colors duration-200 ease-[ease] hover:bg-[color-mix(in_srgb,var(--color-mist)_55%,var(--color-surface))]"
 						>
-							<!-- Rows the selected project doesn't use: dots + count drop to 30%; the name dims to
-							     `muted` rather than 30% so it keeps ≥ 4.5:1 contrast. -->
 							<span
 								class={[
 									'py-2.5 text-[15px] leading-[1.35] [transition:color_0.25s_ease,font-weight_0.25s_ease] max-desk:text-[14px]',

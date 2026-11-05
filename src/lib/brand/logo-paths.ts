@@ -1,10 +1,3 @@
-/**
- * "AS." logo — Schibsted Grotesk Bold outlined to paths, so it never depends on the web font loading.
- * Two geometries:
- *  - tile: the initials centred in a 64×64 rounded square (favicon, nav, footer, avatars)
- *  - mark: the bare initials in a tight box (when the logo sits on its own, no tile)
- * The full stop is always the accent colour.
- */
 export const LOGO_TILE = {
 	viewBox: '0 0 64 64',
 	radius: 14,

@@ -9,16 +9,13 @@
 
 	let { children } = $props();
 
-	// Picks up the theme set by the inline script in app.html and follows OS changes.
 	onMount(() => theme.init());
 </script>
 
 <svelte:head>
-	<!-- Preload the Latin subsets used above the fold so text doesn't swap late. -->
 	<link rel="preload" as="font" type="font/woff2" href={sansUrl} crossorigin="anonymous">
 	<link rel="preload" as="font" type="font/woff2" href={monoUrl} crossorigin="anonymous">
 </svelte:head>
 
-<!-- First in the markup so it's prerendered and covers the page from the first frame. -->
 <IntroLoader />
 {@render children()}

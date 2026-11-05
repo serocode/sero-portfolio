@@ -1,14 +1,8 @@
-/**
- * Skill × project matrix. Each tool lists the project ids (see projects.ts) that use it,
- * taken from the repos' package.json files, READMEs and the project cards.
- * Kortex is a private repo — its column comes from the README only; confirm with Anthony.
- */
 export const skillsIntro = {
 	heading: 'Tools I reach for.',
 	sub: 'No ratings or progress bars. Every dot is a project I built with that tool — pick a project to see its whole stack.'
 };
 
-/** Short column labels (desktop) and two-letter codes (≤820px). */
 export const projectColumns: Record<string, { short: string; code: string }> = {
 	'subpoena-colada': { short: 'Subpoena', code: 'SC' },
 	tockup: { short: 'TockUp', code: 'TU' },

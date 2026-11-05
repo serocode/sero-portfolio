@@ -1,4 +1,3 @@
-/** The bare "AS." mark split into A, S and the full stop, so the intro loader can animate each part. */
 export const LOGO_SPLIT = {
 	viewBox: '0 0 48.75 23.13',
 	width: 48.75,

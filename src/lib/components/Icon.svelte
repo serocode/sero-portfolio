@@ -1,7 +1,3 @@
-<!--
-  Icons used in the approved design (Feather-style strokes; Discord is a filled mark).
-  <Icon name="github" size={20} />   — decorative by default; give the parent link an aria-label.
--->
 <script lang="ts">
 	type Name =
 		| 'github'

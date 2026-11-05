@@ -1,4 +1,3 @@
-/** A value Anthony hasn't supplied yet. Render it with <Placeholder> — never invent one. */
 export type Missing = { placeholder: string };
 export const missing = (placeholder: string): Missing => ({ placeholder });
 export const isMissing = (v: unknown): v is Missing =>
@@ -12,10 +11,8 @@ export type BrowserView = {
 	type: 'browser';
 	label: string;
 	addressBar: string;
-	/** Fill colour behind the screenshot while it loads (matches the app's own background). */
 	background: string;
 	shots: Shot[];
-	/** Optional phone frame laid over the bottom-right corner of the browser. */
 	phoneOverlay?: { src: string; width: number; height: number; alt: string };
 };
 export type PhonesView = { type: 'phones'; label: string; shots: Shot[] };
@@ -25,7 +22,6 @@ export type DiagramView = {
 	label: string;
 	caption: string;
 	ariaLabel: string;
-	/** Top row calls down into the next; render rows with a connector between them. */
 	rows: DiagramBox[][];
 };
 export type ProjectView = BrowserView | PhonesView | DiagramView;

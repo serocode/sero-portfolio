@@ -1,17 +1,8 @@
-<!--
-  38px round theme switch (44px hit area via ::after): left of Résumé on desktop, left of the menu button on
-  phones. Shows the theme you'll switch TO (moon in light, sun in dark); the icons swap with a
-  quarter turn. Clicking reveals the new theme as a circle growing from this button.
-
-  The icon state follows <html data-theme> in CSS, not JS state, so it's right from first paint —
-  the inline script in app.html sets the attribute before the page renders, long before hydration.
--->
 <script lang="ts">
 	import { theme } from '$lib/theme.svelte';
 
 	let el = $state<HTMLButtonElement>();
 	const next = $derived(theme.current === 'dark' ? 'light' : 'dark');
-	/** Sun/moon swap: a quarter turn with a slight overshoot. */
 	const icon =
 		'absolute [transition:transform_0.5s_cubic-bezier(0.3,1.4,0.5,1),opacity_0.25s_ease] motion-reduce:transition-none';
 </script>

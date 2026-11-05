@@ -1,28 +1,5 @@
-/*!
- * Live drafting v4 — the page looks like it's being drafted live, in real time.
- * Each group (section, header, hero, project card, footer) starts when it scrolls into view
- * (or on a timer). A few cursors enter from random directions — the first can burst out of a
- * given origin, e.g. the hero's orbiting comet — and work through the group's elements in
- * reading order like people would: curved, slightly wobbly moves with a small overshoot,
- * short "thinking" pauses, then press-and-drag a marquee around each element. Handles and a
- * live "Label W × H" tag pop in; each box holds briefly and fades; when the queue is empty
- * the cursors drift off and fade. Only targets the reader can actually see get drafted;
- * anything skipped by a fast scroll or a nav jump waits and is drafted when it comes back
- * into view. Randomised per visit.
- *
- * Requires GSAP 3 + ScrollTrigger. Framework-agnostic ES module.
- *   createLiveDrafting({ gsap, ScrollTrigger, groups: [
- *     { node, targets: [{ el: 'h2', label: 'H2', text: true }, { el: '.row', label: 'Row', all: true, max: 3 }],
- *       cursors: 2, origin: () => ({ x, y }), autoplay: { delay: 3 }, start: 'top 85%', topInset: 0,
- *       local: true, range: () => ({ start }) }   // local = overlay inside node (sticky cards, header)
- *   ] })
- * Performance: layout is read once when a group starts (and on refresh). Frames write only
- * transforms, opacity and SVG attributes on a pointer-events:none overlay.
- */
 const NS = 'http://www.w3.org/2000/svg';
 const CSS =
-	// The layer covers <body> (which must be position:relative) and clips, so the tall overlays
-	// never add scroll height or width to the page.
 	'.hx-layer{position:absolute;inset:0;overflow:clip;pointer-events:none;z-index:15}' +
 	'.hx{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}' +
 	'.hx-label text,.hx-tag text{font:500 10.5px/1 var(--font-mono,ui-monospace,monospace);letter-spacing:.02em}';
@@ -62,11 +39,9 @@ export function createLiveDrafting(o) {
 	const onAccent = o.onAccent || '#0d1117';
 	const handleFill = o.handleFill || '#ffffff';
 	const name = o.name || 'Anthony';
-	const speed = o.speed || 1; // >1 = faster
-	// Seconds each finished box stays up before fading. Not scaled by `speed`: a long hold keeps
-	// several boxes on screen at once, so the region reads as still being reconstructed.
+	const speed = o.speed || 1;
 	const hold = o.hold || [1.0, 1.6];
-	const topInset = o.topInset || 0; // height of a sticky header covering the top of the viewport
+	const topInset = o.topInset || 0;
 
 	const style = document.createElement('style');
 	style.textContent = CSS;
@@ -251,7 +226,6 @@ export function createLiveDrafting(o) {
 		return G;
 	}
 
-	// Shrink-wrap a full-width row (e.g. an eyebrow flex row) to the children it actually shows.
 	function unionRect(kids) {
 		let l = Infinity,
 			t = Infinity,
@@ -269,7 +243,6 @@ export function createLiveDrafting(o) {
 		return { left: l, top: t, width: r - l, height: b - t, right: r, bottom: b };
 	}
 
-	// A target is worth drafting only while the reader can actually see it.
 	function inView(G, T) {
 		const r = T.node.getBoundingClientRect();
 		const inset = G.cfg.topInset != null ? G.cfg.topInset : topInset;
@@ -293,9 +266,6 @@ export function createLiveDrafting(o) {
 		}
 		return { x: x, y: y };
 	}
-	// Vertical offset still pending from entrance motion (a section's reveal `translate`, the hero's
-	// rise keyframes) on the target or its ancestors inside the group, so boxes land where the
-	// element comes to rest rather than where it is mid-rise.
 	function revealTy(node, within) {
 		let ty = 0,
 			n = node;
@@ -380,7 +350,6 @@ export function createLiveDrafting(o) {
 			G.svg.setAttribute('width', W);
 			G.svg.setAttribute('height', Math.ceil(maxY - G.oy + 400));
 		}
-		// local coordinates + static cue geometry
 		G.targets.forEach((T) => {
 			const B = { x: T.B.x, y: T.B.y - G.oy, w: T.B.w, h: T.B.h };
 			T.Bl = B;
@@ -404,8 +373,6 @@ export function createLiveDrafting(o) {
 		});
 	}
 
-	// Size tags: above-right, right, left margin, inside top-right, below — first spot that
-	// doesn't collide with another box or tag in the group.
 	function placeLabels(G, maxW) {
 		const taken = G.targets.map((T) => T.Bl);
 		const hit = (r, self) => {
@@ -450,7 +417,6 @@ export function createLiveDrafting(o) {
 			} catch (_e) {}
 			if (p) return { x: p.x - (G.local ? 0 : 0), y: p.y - G.oy, burst: true };
 		}
-		// Random direction: left, right, above, below or a diagonal.
 		const dirs = [180, 0, -90, 90, -140, -40, 140, 40];
 		const a = ((dirs[Math.floor(rand(0, dirs.length))] + rand(-18, 18)) * Math.PI) / 180;
 		const dist = rand(260, 560);
@@ -471,9 +437,6 @@ export function createLiveDrafting(o) {
 		spawn(G, true);
 	}
 
-	// Bring cursors in: at first entry, when the reader scrolls to parts not yet drafted, and
-	// whenever more of the group is on screen than the active cursors can cover — so every idle
-	// cursor joins in instead of one cursor working through the region alone.
 	function spawn(G, first) {
 		const vis = G.queue.filter((T) => inView(G, T));
 		if (!vis.length) {
@@ -491,7 +454,6 @@ export function createLiveDrafting(o) {
 			if (C.active || k >= want) return;
 			G.live++;
 			const T0 = vis[Math.min(k, vis.length - 1)];
-			// Only the group's very first cursor bursts out of the origin (the hero comet).
 			const e = entryFor(G, first && C.i === 0 ? C : { i: -1 }, T0);
 			C.x = e.x;
 			C.y = e.y;
@@ -524,7 +486,6 @@ export function createLiveDrafting(o) {
 		if (!G.queue.length) return exitCursor(G, C);
 		const T = takeVisible(G);
 		if (!T) {
-			// Nothing on screen left to draft: hover a beat in case the reader keeps scrolling, then leave.
 			C.wait = (C.wait || 0) + 1;
 			if (C.wait > 5) {
 				C.wait = 0;
@@ -538,7 +499,6 @@ export function createLiveDrafting(o) {
 			return;
 		}
 		C.wait = 0;
-		// More of the group may have come into view (reveal, layout settle): call in idle cursors.
 		spawn(G, false);
 		calls.push(
 			gsap.delayedCall(rand(0.05, 0.32) / speed, () => {
@@ -661,7 +621,6 @@ export function createLiveDrafting(o) {
 					delay: 0.08,
 					ease: 'power2.out'
 				});
-				// hold, then fade this box softly
 				gsap.to(T.g, {
 					opacity: 0,
 					duration: 0.8,
@@ -769,7 +728,7 @@ export function createLiveDrafting(o) {
 	ST.addEventListener('refreshInit', onRefreshInit);
 
 	return {
-		_groups: groups, // for debugging: each has .state ('idle' | 'running' | 'waiting' | 'done')
+		_groups: groups,
 		refresh: () => {
 			ST.refresh();
 		},

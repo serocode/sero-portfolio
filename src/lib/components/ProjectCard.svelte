@@ -11,10 +11,8 @@
 
 	let { project, index, total }: { project: Project; index: number; total: number } = $props();
 
-	// Each card switches its views and shots independently.
 	let viewIdx = $state(0);
 
-	// Switching views: direction-aware slide + a smooth height change (see src/lib/motion.ts).
 	let stage = $state<HTMLElement>();
 	const tween = new HeightTween();
 	$effect(() => tween.attach(stage));
@@ -44,7 +42,6 @@
 		shotIdx[viewIdx] = (i + shots.length) % shots.length;
 	}
 
-	/** ←/→ on a focused thumbnail (or phone) moves to the previous/next shot and keeps focus with it. */
 	function onShotKeys(event: KeyboardEvent) {
 		if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
 		const list = (event.currentTarget as HTMLElement).closest('ul');
@@ -53,14 +50,12 @@
 		list?.querySelectorAll<HTMLButtonElement>('button')[shotI]?.focus();
 	}
 
-	/** Touch swipe on the screenshot (browser or phones) steps through the shots. */
 	const swipeShots = $derived({
 		onSwipe: (dir: 1 | -1) => pickShot(shotI + dir),
 		enabled: shots.length > 1
 	});
 
 	const caption = 'flex justify-between gap-3 font-mono text-[12px] leading-[1.5] text-muted';
-	/** Architecture diagram boxes: the highlighted layer, optional parts, and the data store. */
 	const boxKind: Record<DiagramBox['kind'], string> = {
 		plain: 'border border-line bg-surface',
 		key: 'border-[1.5px] border-accent bg-surface font-semibold text-ink',
@@ -72,12 +67,6 @@
 	const isGithub = (href: string) => /^https?:\/\/(www\.)?github\.com\//.test(href);
 </script>
 
-<!--
-  Sticky deck card. Offset: a stair-step under the header (--deck-top: 88px + i×16px; ≤820px a
-  tighter 76px + i×10px), or — for a card taller than the viewport — bottom edge 24px above the fold
-  (--card-h from fit-sticky.ts). svh = small viewport, so the offset holds still while mobile
-  toolbars collapse. Reduced motion: a normal stack.
--->
 <article
 	class="deck-card sticky top-[min(var(--deck-top),calc(100svh_-_var(--card-h,0px)_-_24px_-_env(safe-area-inset-bottom,0px)))] flex origin-top flex-col gap-[22px] rounded-[28px] border border-line bg-surface p-[clamp(20px,2.6vw,32px)] shadow-[0_1px_2px_rgb(var(--shadow-rgb)/calc(0.04*var(--shadow-k))),0_-18px_48px_-32px_rgb(var(--shadow-rgb)/calc(0.28*var(--shadow-k))),0_30px_60px_-40px_rgb(var(--shadow-rgb)/calc(0.35*var(--shadow-k)))] will-change-transform [--deck-top:calc(88px_+_var(--i,0)_*_16px)] max-desk:rounded-[22px] max-desk:[--deck-top:calc(76px_+_var(--i,0)_*_10px)] motion-reduce:relative! motion-reduce:top-auto!"
 	aria-labelledby="{project.id}-title"
@@ -121,7 +110,6 @@
 		</ul>
 	</div>
 
-	<!-- Media ~55% + text; stacked at ≤820px. -->
 	<div class="flex flex-wrap items-start gap-x-12 gap-y-7">
 		<figure class="flex min-w-0 flex-[1.35_1_440px] flex-col gap-3 max-desk:basis-full">
 			{#if project.views.length > 1}
@@ -144,8 +132,6 @@
 				</div>
 			{/if}
 
-			<!-- One grid cell: switching views cross-slides the media while the card glides to its new
-			     height (and, through fit-sticky, its new sticky position). -->
 			<div class="grid items-start [&>*]:[grid-area:1/1]" bind:this={stage} data-draft="Media">
 				{#key viewIdx}
 					<div
@@ -169,7 +155,6 @@
 										<span class="size-[9px] flex-none rounded-full bg-line"></span
 										><span class="size-[9px] flex-none rounded-full bg-line"></span
 										><span class="size-[9px] flex-none rounded-full bg-line"></span>
-										<!-- mist, not chip: muted 10px text on chip would be 4.44:1 (under 4.5). -->
 										<span
 											class="ml-3 flex h-[22px] max-w-[300px] min-w-0 flex-1 items-center gap-2 overflow-hidden rounded-md bg-mist px-2.5 font-mono text-[10px] whitespace-nowrap text-muted"
 											><span class="size-1.5 flex-none rounded-full bg-accent"></span>

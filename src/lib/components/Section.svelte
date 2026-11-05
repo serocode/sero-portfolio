@@ -1,4 +1,3 @@
-<!-- Section frame: label row + h2 + optional sub, inside the content column. -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { reveal } from '$lib/actions/reveal';
@@ -22,11 +21,8 @@
 		label: string;
 		heading: string;
 		sub?: string;
-		/** `mist` = full-bleed grey band (Projects). */
 		tone?: 'paper' | 'mist';
-		/** Space under the sub line, px. */
 		subGap?: number;
-		/** Live drafting (LiveDrafting.svelte): cursors working this section, and where the first enters. */
 		draftCursors?: number;
 		draftOrigin?: 'comet';
 		children?: Snippet;
@@ -42,7 +38,6 @@
 	data-draft-cursors={draftCursors}
 	data-draft-origin={draftOrigin}
 >
-	<!-- On arrival the label, heading, intro and content rise into place, staggered. -->
 	<div class="{wrap} {sectionPad}">
 		<div class={revealItem} style:--reveal-i={0}>
 			<SectionLabel {n} {label} rule={tone === 'mist' ? 'var(--color-line)' : undefined} />

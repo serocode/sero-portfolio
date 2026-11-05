@@ -1,23 +1,13 @@
 import type { Action } from 'svelte/action';
 
 type SwipeParams = {
-	/** +1 = swiped left (next), -1 = swiped right (previous). */
 	onSwipe: (direction: 1 | -1) => void;
 	enabled?: boolean;
 };
 
-/** Minimum horizontal travel (px), and how much more horizontal than vertical it must be. */
 const MIN_DX = 40;
 const RATIO = 1.5;
 
-/**
- * Horizontal touch swipe that leaves vertical page scrolling to the browser.
- *
- * `touch-action: pan-y` lets the browser keep handling vertical pans (and pinch-zoom) natively;
- * when it takes over a vertical scroll it sends `pointercancel` and we drop the gesture. Only
- * touch pointers count; mouse and pen keep their click behaviour. The click a browser may fire at
- * the end of a swipe is swallowed so a swipe that ends on a thumbnail doesn't also select it.
- */
 export const swipe: Action<HTMLElement, SwipeParams> = (node, params) => {
 	let opts = params;
 	let pointer: number | null = null;

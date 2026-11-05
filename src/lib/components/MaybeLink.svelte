@@ -1,8 +1,3 @@
-<!--
-  A link whose target may not be supplied yet.
-  - href is a string → a real <a> (external links open in a new tab and say so).
-  - href is missing(...) or null → a <button aria-disabled="true"> with a "coming soon" title. Never href="#".
--->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { HTMLAnchorAttributes } from 'svelte/elements';
@@ -21,14 +16,11 @@
 	}: {
 		href: string | Missing | null;
 		class?: string;
-		/** Accessible name when the visible content is only an icon. */
 		label?: string;
 		external?: boolean;
 		download?: boolean;
-		/** Tooltip + accessible description while the target is missing. */
 		comingSoon?: string;
 		onclick?: HTMLAnchorAttributes['onclick'];
-		/** Live-drafting tag label (`data-draft`, see LiveDrafting.svelte). */
 		draft?: string;
 		children: Snippet;
 	} = $props();

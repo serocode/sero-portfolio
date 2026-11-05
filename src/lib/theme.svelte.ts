@@ -1,17 +1,3 @@
-/**
- * Theme state. The initial value is set before first paint by the inline script in app.html
- * (so there's no white flash); this class picks it up, keeps it in sync, and remembers the
- * visitor's explicit choice in localStorage.
- *
- *   import { theme } from '$lib/theme.svelte';
- *   onMount(() => theme.init());     // once, in +layout.svelte
- *   theme.current                   // 'light' | 'dark'
- *   theme.toggle(buttonEl)          // animated: the new theme grows as a circle from buttonEl
- *
- * Only an explicit toggle animates. OS changes and page loads switch instantly.
- * Animation: View Transitions API circle reveal (650ms). Fallback: 220ms colour cross-fade.
- * Reduced motion: instant.
- */
 export type ThemeName = 'light' | 'dark';
 const KEY = 'theme';
 const THEME_COLOR = { light: '#ffffff', dark: '#0b0f14' } as const;
@@ -39,18 +25,14 @@ class Theme {
 	set(next: ThemeName, origin?: HTMLElement | null) {
 		try {
 			localStorage.setItem(KEY, next);
-		} catch {
-			/* private mode — still switch for this visit */
-		}
+		} catch {}
 		if (next === this.current) return;
 
 		const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		if (reduce) return this.#apply(next, false);
 
-		// Fallback: quick colour cross-fade.
 		if (!document.startViewTransition || !origin) return this.#apply(next, true);
 
-		// Circle reveal from the centre of the button.
 		const r = origin.getBoundingClientRect();
 		const x = r.left + r.width / 2;
 		const y = r.top + r.height / 2;

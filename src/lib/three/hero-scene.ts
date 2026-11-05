@@ -1,15 +1,3 @@
-/**
- * Hero 3D scene — ported 1:1 from the approved design prototype.
- * A breathing sphere of 4,200 points (grey → orange where the ripple peaks), a dotted orbit ring,
- * and an orange comet with a fading trail that circles the ring. Follows the pointer gently.
- *
- * Usage (client only):  const scene = createHeroScene(canvas);  …  scene.dispose();
- * Load it with a dynamic import inside onMount so three.js stays out of the initial bundle.
- *
- * Theme-aware: colours come from the CSS variables --scene-base, --scene-peak, --scene-ring and
- * --color-accent (see src/lib/styles/theme.css). The scene watches <html data-theme> and recolours
- * itself when the theme changes — no wiring needed.
- */
 import {
 	BufferAttribute,
 	BufferGeometry,
@@ -59,7 +47,6 @@ export function createHeroScene(
 	const group = new Group();
 	scene.add(group);
 
-	// ── Sphere: Fibonacci-distributed points ───────────────────────────────
 	const N = 4200;
 	const pos = new Float32Array(N * 3);
 	const seed = new Float32Array(N);
@@ -89,7 +76,7 @@ export function createHeroScene(
 		uniforms,
 		transparent: true,
 		depthWrite: false,
-		vertexShader: /* glsl */ `
+		vertexShader: `
 			uniform float uTime; uniform float uPR; uniform float uCam;
 			attribute float aSeed;
 			varying float vMix; varying float vFade;
@@ -104,7 +91,7 @@ export function createHeroScene(
 				gl_PointSize = (2.2 + 2.6 * aSeed * aSeed) * (1.0 + 0.45 * smoothstep(0.6, 0.85, vMix)) * uPR * (7.0 / -mv.z);
 				vFade = clamp((mv.z + uCam + 1.8) / 3.5, 0.22, 1.0);
 			}`,
-		fragmentShader: /* glsl */ `
+		fragmentShader: `
 			uniform vec3 uA; uniform vec3 uB; uniform vec3 uC;
 			varying float vMix; varying float vFade;
 			void main() {
@@ -119,7 +106,6 @@ export function createHeroScene(
 	});
 	group.add(new Points(geo, mat));
 
-	// ── Orbit ring ─────────────────────────────────────────────────────────
 	const M = 420;
 	const rp = new Float32Array(M * 3);
 	for (let j = 0; j < M; j++) {
@@ -142,7 +128,6 @@ export function createHeroScene(
 	ring.rotation.z = -0.35;
 	group.add(ring);
 
-	// ── Comet: glowing head + fading trail, always drawn on top ────────────
 	const TR = 32;
 	const tp = new Float32Array(TR * 3);
 	const tt = new Float32Array(TR);
@@ -155,7 +140,7 @@ export function createHeroScene(
 		transparent: true,
 		depthWrite: false,
 		depthTest: false,
-		vertexShader: /* glsl */ `
+		vertexShader: `
 			uniform float uPR;
 			attribute float aT;
 			varying float vT;
@@ -166,7 +151,7 @@ export function createHeroScene(
 				float head = step(0.999, aT);
 				gl_PointSize = mix(2.0 + 6.0 * aT, 34.0, head) * uPR * (8.2 / -mv.z);
 			}`,
-		fragmentShader: /* glsl */ `
+		fragmentShader: `
 			uniform vec3 uCol;
 			varying float vT;
 			void main() {
@@ -191,7 +176,6 @@ export function createHeroScene(
 		if (!w || !h) return;
 		renderer.setSize(w, h, false);
 		camera.aspect = w / h;
-		// Pull the camera back on tall/narrow canvases so the ring never clips.
 		camera.position.z = CAMERA_Z / Math.max(0.55, Math.min(1, w / h));
 		uniforms.uCam.value = camera.position.z;
 		camera.updateProjectionMatrix();
@@ -219,8 +203,6 @@ export function createHeroScene(
 		tx = e.clientX / (window.innerWidth || 1) - 0.5;
 		ty = e.clientY / (window.innerHeight || 1) - 0.5;
 	};
-	// Comet head → page coordinates: the launch point of the live-drafting cursors (comet.ts).
-	// The canvas rect is re-read every 20 frames; the head is projected every frame.
 	const headV = new Vector3();
 	const cvDoc = { x: 0, y: 0, w: 1, h: 1 };
 	let frameN = 0;
@@ -269,7 +251,6 @@ export function createHeroScene(
 	});
 	ro.observe(canvas);
 
-	// Pause the loop when the hero scrolls out of view.
 	const io = new IntersectionObserver(([entry]) => {
 		visible = entry.isIntersecting;
 		if (visible && !reduce && !raf) {
@@ -279,7 +260,6 @@ export function createHeroScene(
 	});
 	io.observe(canvas);
 
-	// Recolour when <html data-theme> changes.
 	const recolor = () => {
 		const p = readPalette();
 		uniforms.uA.value.set(p.accent);

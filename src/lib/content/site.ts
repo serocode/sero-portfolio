@@ -7,12 +7,9 @@ export const site = {
 	description:
 		'Anthony Serojales — software developer in the Philippines building full-stack web applications. HR by role, developer by practice.',
 	ogDescription: 'Building thoughtful digital experiences. HR by role, developer by practice.',
-	/** Set this once the domain is known; used for canonical + og:url. */
 	url: 'https://serocode.vercel.app' as string | Missing,
 	email: 'gaserojales.dev@gmail.com' as string | Missing,
-	/** Résumé PDF URL. `null` keeps every résumé link disabled ("coming soon"). */
 	resume: null as string | Missing | null,
-	/** About card photo (static/images/). `null` shows the placeholder. */
 	photo: {
 		src: '/images/anthony.webp',
 		width: 768,
@@ -23,7 +20,6 @@ export const site = {
 
 export const hero = {
 	eyebrow: 'Hi, my name is',
-	/** h1: the first name sits small above the surname, which carries the accent period. */
 	firstName: 'Anthony',
 	lastName: 'Serojales',
 	taglineLead: 'Building thoughtful',
@@ -48,7 +44,6 @@ export const socials: (Link & { icon: 'github' | 'facebook' | 'discord' | 'linke
 	}
 ];
 
-/** Hero + footer show only these three icons; Contact lists all socials plus Résumé. */
 export const heroSocials = ['github', 'facebook', 'discord'] as const;
 
 export const nav = [

@@ -1,4 +1,3 @@
-<!-- The rotating "HR BY ROLE · DEVELOPER BY PRACTICE" seal that sits on the About card's corner. -->
 <script lang="ts">
 	let {
 		text,

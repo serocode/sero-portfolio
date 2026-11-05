@@ -1,14 +1,3 @@
-<!--
-  "AS." logo (option D). Outlined paths — no font dependency.
-
-  <Logo />                         tile, 32px — nav, footer, avatars
-  <Logo size={24} />               smaller tile
-  <Logo variant="mark" size={28} /> bare initials (size = height in px)
-  <Logo decorative />              hide from screen readers when a visible name sits next to it
-
-  Colours come from the theme tokens, so it flips automatically in dark mode:
-  tile = inverse square + on-inverse letters (dark mode: light square + dark letters); the full stop is always accent.
--->
 <script lang="ts">
 	import { LOGO_MARK, LOGO_TILE } from './logo-paths';
 

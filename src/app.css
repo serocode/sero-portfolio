@@ -1,14 +1,7 @@
-/*
- * "Paper & Ember" — design tokens of the approved design.
- * White dominant, one accent (#f97316). No cobalt/blue anywhere.
- */
 @import "tailwindcss";
 @import "@fontsource-variable/schibsted-grotesk";
 @import "@fontsource-variable/jetbrains-mono";
-/* Dark theme: extra tokens + every dark override, the `dark:` variant, the switch cross-fade.
-   Order-independent: overrides sit on :root[data-theme='dark'], which outranks @theme's :root. */
 @import "./lib/styles/theme.css";
-/* Theme switch: the new theme grows as a circle from the toggle (View Transitions). */
 @import "./lib/styles/theme-transition.css";
 
 @theme {
@@ -16,50 +9,38 @@
 		"Schibsted Grotesk Variable", "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
 	--font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
 
-	/* Surfaces */
-	--color-paper: #ffffff; /* page ground — dominant */
-	--color-mist: #f6f7f9; /* panels, hover rows, active Approach item */
-	--color-line: #e3e6ea; /* borders */
-	--color-line-soft: #eef0f3; /* hairlines inside cards */
+	--color-paper: #ffffff;
+	--color-mist: #f6f7f9;
+	--color-line: #e3e6ea;
+	--color-line-soft: #eef0f3;
 
-	/* Text */
-	--color-ink: #0d1117; /* headings, primary buttons, contact panel */
-	--color-body: #4b5561; /* paragraphs */
-	--color-muted: #68727e; /* labels, captions */
-	--color-faint: #9aa3ad; /* tertiary, disabled */
+	--color-ink: #0d1117;
+	--color-body: #4b5561;
+	--color-muted: #68727e;
+	--color-faint: #9aa3ad;
 
-	/* Ember accent — fills/dots/bars use 500; text uses 700 for contrast; large display text may use 600 */
 	--color-accent: #f97316;
 	--color-accent-600: #ea580c;
 	--color-accent-700: #c2410c;
 	--color-accent-800: #9a3412;
 
-	/* Missing-content placeholders only */
 	--color-placeholder: #7c3aed;
 
 	--radius-card: 16px;
 	--radius-panel: 28px;
 
-	/* The one layout breakpoint: desktop layout from 821px (≤820px is the phone/menu layout).
-	   Usage, mobile-first: `desk:flex-row`. */
 	--breakpoint-desk: 821px;
 
-	/* The site's one UI easing (ease-out-cubic). Its JS twin is `ease` in src/lib/motion.ts. */
 	--ease-smooth: cubic-bezier(0.33, 1, 0.68, 1);
 
-	/* Motion. Each animation is a Tailwind token (animate-*); its @keyframes sit here so Tailwind
-	   only emits the ones in use. Delays are baked in where a stagger needs them. */
 	--animate-rise-1: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 0.05s both;
 	--animate-rise-3: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 0.19s both;
 	--animate-rise-4: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 0.26s both;
-	/* The h1 block slides without fading: an element that starts at opacity 0 isn't counted as LCP. */
 	--animate-rise-lcp: rise-lcp 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 0.12s both;
 	--animate-fade-in: fade-in 1.4s ease 0.2s both;
 	--animate-shimmer: shimmer 1.6s linear infinite;
 	--animate-badge-spin: badge-spin 24s linear infinite;
 	--animate-orb-pulse: orb-pulse 1.6s ease-in-out infinite;
-	/* Intro loader (IntroLoader.svelte): letters rise, the full stop lands, the line fills, then
-	   the content lifts and the panel leaves like a curtain. */
 	--animate-ld-rise-a: ld-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards;
 	--animate-ld-rise-s: ld-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards;
 	--animate-ld-drop: ld-drop 0.75s cubic-bezier(0.3, 0.6, 0.3, 1) 0.5s forwards;
@@ -68,10 +49,8 @@
 	--animate-ld-fill-end: ld-fill-end 0.2s ease-out forwards;
 	--animate-ld-inner-out: ld-inner-out 0.5s cubic-bezier(0.76, 0, 0.24, 1) 0.1s forwards;
 	--animate-ld-lift: ld-lift 0.75s cubic-bezier(0.76, 0, 0.24, 1) 0.22s forwards;
-	/* Mobile menu: the panel fades in; its links drop in, staggered. */
 	--animate-menu-in: menu-in 0.22s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 	--animate-menu-item-in: menu-item-in 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-	/* Footer "Back to top": the arrow loops up on hover/focus, and launches on click. */
 	--animate-arrow-loop: arrow-loop 0.9s cubic-bezier(0.5, 0, 0.2, 1) infinite;
 	--animate-arrow-launch: arrow-launch 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
 
@@ -214,7 +193,6 @@
 			transform: rotate(360deg);
 		}
 	}
-	/* Image skeleton sweep (see src/lib/ui.ts → imgFrame) */
 	@keyframes shimmer {
 		from {
 			background-position: 110% 0;
@@ -225,17 +203,13 @@
 	}
 }
 
-/* App states set on <html> by the head script in app.html (see IntroLoader.svelte). */
 @custom-variant loader-on (:root[data-loader="on"] &);
 @custom-variant loader-out (:root[data-loader="out"] &);
 @custom-variant stranger (:root[data-stranger] &);
 @custom-variant stranger-veiled (:root[data-stranger="veiled"] &);
 
-/* Element defaults — Tailwind's base layer, so utilities override them. Everything else is
-   Tailwind classes in the markup (html/body classes are in app.html). */
 @layer base {
 	:root {
-		/* Sticky header: 64px bar + 1px border. Sizes the snap offset and the full-screen sections. */
 		--header-h: 65px;
 	}
 	a {
@@ -251,11 +225,6 @@
 	:where(button:not(:disabled), [role="button"], summary, label) {
 		cursor: pointer;
 	}
-	/* Visitor cursor (tokens in theme.css): an accent collaborator dart, a deeper accent on
-	   anything clickable (text isn't selectable, so no I-beam). Its identity tag is CollabCursor.svelte.
-	   Mouse/trackpad only, and left native when the visitor asks for more contrast (they may
-	   also have enlarged their system pointer, which a custom image would ignore). Disabled
-	   placeholders keep `cursor-not-allowed`. */
 	@media (pointer: fine) and (prefers-contrast: no-preference) {
 		html {
 			cursor: var(--cursor-arrow), auto;
@@ -271,8 +240,6 @@
 	}
 }
 
-/* Reduced motion, page-wide: every transition becomes instant. A rule for every element at once
-   can't be a class, so it stays here (per-element animations use motion-reduce: in the markup). */
 @media (prefers-reduced-motion: reduce) {
 	*,
 	*::before,

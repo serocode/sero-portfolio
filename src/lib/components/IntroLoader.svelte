@@ -1,13 +1,3 @@
-<!--
-  Intro loader — "the full stop lands, then the page opens".
-  Rendered first in +layout.svelte so it's in the prerendered HTML, but only VISIBLE when the head
-  script in app.html set <html data-loader="on">: first load of a session, JS on, no reduced motion.
-  So there's no flash, and no-JS / reduced-motion / returning visitors never see it.
-
-  Exit = max(minMs, critical ready), capped at maxMs — both from navigation start. Critical = fonts loaded (the page itself is
-  prerendered underneath, already painted). The 3D hero is decorative and NOT waited for: it loads
-  in parallel and shows its own skeleton if it's still coming when the curtain lifts.
--->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { LOGO_SPLIT as L } from '$lib/brand/logo-split-paths';
@@ -22,8 +12,6 @@
 	onMount(() => {
 		const root = document.documentElement;
 		if (root.dataset.loader === 'out') {
-			// The head script's safety net already started the exit (slow connection): let the
-			// curtain finish, then clean up.
 			markSeen();
 			const t = setTimeout(() => {
 				gone = true;
@@ -35,19 +23,15 @@
 			gone = true;
 			return;
 		}
-		// Both limits count from navigation start (performance.now()'s origin), not from hydration,
-		// so a slow connection never stretches the 3s cap.
 		const critical = document.fonts?.ready ?? Promise.resolve();
 		let cancelled = false;
 
 		Promise.race([critical, wait(Math.max(0, maxMs - performance.now()))])
-			// The minimum lets the full stop land; exiting mid-letter reads as a flash.
 			.then(() => wait(Math.max(0, minMs - performance.now())))
 			.then(() => {
 				if (cancelled) return;
 				leaving = true;
 				markSeen();
-				// Release scrolling and start the hero's entrance as the curtain clears.
 				setTimeout(() => delete root.dataset.loader, 380);
 			});
 
@@ -60,9 +44,7 @@
 	function markSeen() {
 		try {
 			sessionStorage.setItem('intro-seen', '1');
-		} catch {
-			/* private mode: the loader may show again next load */
-		}
+		} catch {}
 	}
 
 	function onEnd(e: AnimationEvent) {
@@ -70,11 +52,6 @@
 	}
 </script>
 
-<!--
-  Hidden unless the head script switched it on (`loader-on:`; also covers no-JS), or the head
-  script's safety net started the exit (`loader-out:`), or this component is leaving. Never shown
-  with reduced motion. The panel lifts away like a curtain with a curved edge.
--->
 {#if !gone}
 	<div
 		class={[
@@ -95,7 +72,6 @@
 			]}
 			aria-hidden="true"
 		>
-			<!-- A then S rise through a mask; the full stop drops in and squashes on the baseline. -->
 			<svg
 				class="block h-auto w-[clamp(150px,22vw,202px)] overflow-visible"
 				aria-hidden="true"
@@ -124,7 +100,6 @@
 			>
 				Anthony Serojales
 			</p>
-			<!-- A timer fills the line to 85%; the last 15% only when the page is really ready. -->
 			<div class="h-0.5 w-[140px] overflow-hidden rounded-[2px] bg-line">
 				<span
 					class={[

@@ -1,25 +1,3 @@
-<!--
-  "Live drafting" (v4) across the whole page. Cursors enter from random directions (the hero's
-  and About's first cursor bursts out of the orbiting comet). They work through each group in
-  reading order, drawing a measuring box with handles and a "Label W × H" tag around every
-  marked element. Each box holds briefly and fades; when a group is done the cursors drift off.
-
-  Only what is on screen gets drafted. Anything skipped by a fast scroll or a nav jump waits,
-  and is drafted when it comes back into view. Client-only. GSAP is lazy-loaded (not in the
-  initial chunk). Off for prefers-reduced-motion. The effect itself is src/lib/motion/live-drafting.js.
-
-  Mount once, after the sections:   <LiveDrafting />
-
-  Groups (one per region): data-draft-group, plus
-      data-draft-cursors="1–6"   data-draft-origin="comet"   data-draft-autoplay="<s>"
-      data-draft-local (overlay inside the element: sticky header)
-      data-draft-card (a stacked deck card, a direct child of the deck; implies local)
-      data-draft-start="top bottom"   data-draft-inset="0"
-  Targets (inside a group; each belongs to its nearest group):
-      data-draft="Label"  required, the tag text
-      data-draft-text     measure the text's own box (headings, paragraphs)
-      data-draft-fit      shrink-wrap a full-width row to its children (eyebrow rows)
--->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { DraftGroup, LiveDrafting } from '$lib/motion/live-drafting.js';
@@ -27,14 +5,9 @@
 
 	let {
 		name = 'Anthony',
-		/** Sticky header height: targets under it count as off screen. Default: the `--header-h` token. */
 		headerInset,
-		/** Seconds after the intro loader's curtain starts lifting before timed groups may start. */
 		loaderDelay = 0.6,
-		/** > 1 = faster cursor moves, drags and pauses. */
 		speed = 1.7,
-		/** Seconds a finished box holds before fading, [min, max]. Long enough that several boxes
-		    overlap and the page reads as still being reconstructed. */
 		hold = [2.4, 3.4]
 	}: {
 		name?: string;
@@ -44,7 +17,6 @@
 		hold?: [number, number];
 	} = $props();
 
-	/** Resolves once <html data-loader> is gone (the loader lifts, or never showed). */
 	function loaderGone(root: HTMLElement) {
 		return new Promise<boolean>((resolve) => {
 			if (!root.dataset.loader) return resolve(false);
@@ -82,7 +54,6 @@
 			const groups: DraftGroup[] = nodes.map((node) => {
 				const d = node.dataset;
 				const targets = Array.from(node.querySelectorAll<HTMLElement>('[data-draft]'))
-					// a target belongs to its nearest group (cards sit inside the Projects section)
 					.filter((el) => el.closest('[data-draft-group]') === node)
 					.map((el) => ({
 						el,
@@ -103,8 +74,6 @@
 				if (d.draftAutoplay !== undefined) {
 					g.autoplay = { delay: Number(d.draftAutoplay || 0) + (hadLoader ? loaderDelay : 0) };
 				}
-				// Stacked project cards are sticky, so they never "enter" by normal scroll —
-				// start each one when its slot in the deck reaches the lower part of the screen.
 				const deck = node.parentElement;
 				if (d.draftCard !== undefined && deck) {
 					const cards = Array.from(
@@ -112,7 +81,6 @@
 					);
 					const i = cards.indexOf(node);
 					g.range = () => {
-						// The deck's gap changes at the 820px breakpoint, so read it live.
 						const gap = Number.parseFloat(getComputedStyle(deck).rowGap) || 0;
 						let top = deck.getBoundingClientRect().top + window.scrollY;
 						for (let j = 0; j < i; j++) top += cards[j].offsetHeight + gap;

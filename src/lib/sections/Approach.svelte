@@ -9,17 +9,13 @@
 	const total = pad2(approach.length);
 
 	let selected = $state(0);
-	/** Hover preview; falls back to the selected item when the pointer leaves the list. */
 	let preview = $state<number | null>(null);
 	const shown = $derived(preview ?? selected);
 	const cur = $derived(approach[shown]);
 
-	// Moving to another topic: the panel's content swaps with a direction-aware slide while its
-	// height glides to the new size (see src/lib/motion.ts).
 	let stage = $state<HTMLElement>();
 	const tween = new HeightTween();
 	$effect(() => tween.attach(stage));
-	/** +1 = next (content moves left), -1 = previous. */
 	let dir = $state<1 | -1>(1);
 	let forcedDir: 1 | -1 | null = null;
 	let lastShown = 0;
@@ -40,15 +36,11 @@
 
 	let tabs: HTMLButtonElement[] = $state([]);
 
-	/** The topic panel (also the WAI-ARIA tabpanel, so it's focusable). */
 	const panel =
 		'relative flex min-h-[380px] flex-col gap-5 overflow-hidden rounded-3xl bg-mist p-[clamp(28px,4vw,48px)] focus-visible:rounded-3xl focus-visible:outline-offset-4';
-	/** Previous / next topic buttons. */
 	const navButton =
 		'flex size-11 items-center justify-center rounded-full border border-line bg-surface text-strong [transition:background-color_0.15s_ease,border-color_0.15s_ease,color_0.15s_ease] hover:border-inverse hover:bg-inverse hover:text-on-inverse focus-visible:rounded-full';
 
-	/** `step` says which way you moved (the prev/next buttons and arrow keys wrap around, but
-	    still read as previous/next). */
 	function select(i: number, step?: 1 | -1) {
 		forcedDir = step ?? null;
 		selected = (i + approach.length) % approach.length;
@@ -78,8 +70,6 @@
 	heading={approachIntro.heading}
 	sub={approachIntro.sub}
 >
-	<!-- Desktop: vertical tab list | panel. ≤820px: the tabs wrap into a grid (2 columns on phones,
-	     4 on tablets) above the panel, so the whole section sits inside the viewport. -->
 	<div
 		class="grid grid-cols-[264px_minmax(0,1fr)] items-stretch gap-x-10 gap-y-6 max-desk:grid-cols-[minmax(0,1fr)]"
 	>
@@ -152,7 +142,6 @@
 			data-draft="Panel"
 		>
 			<!-- biome-ignore-end lint/a11y/noNoninteractiveTabindex: WAI-ARIA tabs pattern -->
-			<!-- Decorative numeral drawn from a pseudo-element so it isn't read or contrast-checked as text. -->
 			<span
 				class="pointer-events-none absolute -right-2 -bottom-[0.26em] text-[clamp(120px,16vw,190px)] leading-none font-extrabold tracking-[-0.06em] text-numeral before:content-[attr(data-n)] max-desk:text-[120px]"
 				aria-hidden="true"
@@ -184,7 +173,6 @@
 					</button>
 				</div>
 			</div>
-			<!-- One grid cell: the outgoing and incoming topic overlap briefly while swapping. -->
 			<div class="relative grid items-start [&>*]:[grid-area:1/1]" bind:this={stage}>
 				{#key shown}
 					<div

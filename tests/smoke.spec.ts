@@ -3,13 +3,11 @@ import { expect, type Page, test } from '@playwright/test';
 
 const sections = ['about', 'approach', 'projects', 'skills', 'contact'];
 
-/** The intro loader plays once per session; these tests exercise the page itself, so skip it. */
 const skipIntro = () => sessionStorage.setItem('intro-seen', '1');
 test.beforeEach(async ({ context }) => {
 	await context.addInitScript(skipIntro);
 });
 
-/** Collects console errors + uncaught exceptions for the whole test. */
 function trackErrors(page: Page) {
 	const errors: string[] = [];
 	page.on('console', (m) => {
@@ -47,7 +45,7 @@ test('nav anchors scroll to each section', async ({ page, isMobile }) => {
 		}
 		await expect(page.locator(`#${id}`)).toBeInViewport();
 		const top = await page.locator(`#${id}`).evaluate((el) => el.getBoundingClientRect().top);
-		expect(top).toBeGreaterThanOrEqual(60); // lands under the sticky bar
+		expect(top).toBeGreaterThanOrEqual(60);
 	}
 });
 
@@ -107,7 +105,7 @@ test('skills filter changes the readout', async ({ page }) => {
 	await page.keyboard.press('Enter');
 	await expect(medicore).toHaveAttribute('aria-pressed', 'true');
 	await expect(readout).toContainText('MediCore uses 16 of these 25 tools.');
-	await page.keyboard.press('Enter'); // selecting it again returns to All
+	await page.keyboard.press('Enter');
 	await expect(readout).toContainText('25 tools across 6 projects.');
 });
 
@@ -186,7 +184,6 @@ test('project deck stays sticky on phones and the stuck card recedes under the n
 	await page.goto('/');
 	const cards = page.locator('.deck-card');
 	expect(await cards.first().evaluate((el) => getComputedStyle(el).position)).toBe('sticky');
-	// Scroll until card 2 overlaps card 1, then card 1 must be scaled down and painted beneath.
 	const second = await cards.nth(1).evaluate((el) => el.getBoundingClientRect().top + scrollY);
 	await page.evaluate((y) => window.scrollTo(0, y - 300), second);
 	await page.waitForTimeout(150);
@@ -223,7 +220,7 @@ test('reduced motion: no spin, flat deck, no smooth scroll', async ({ browser })
 
 test('axe: no accessibility violations (default + filtered + flipped)', async ({ page }) => {
 	await page.goto('/');
-	await page.waitForTimeout(1200); // let entrance animations finish
+	await page.waitForTimeout(1200);
 	const run = async () => (await new AxeBuilder({ page }).analyze()).violations;
 	expect(await run()).toEqual([]);
 	await page.locator('#skills').getByRole('button', { name: 'Kortex' }).click();
@@ -274,7 +271,6 @@ test('mobile menu fills the screen and every link is tappable', async ({ page, i
 	});
 	expect(geo?.bottom).toBeCloseTo(geo?.vh ?? 0, 0);
 	expect(geo?.hittable).toBe(5);
-	// The brand link closes the menu and releases the scroll lock.
 	await page.locator('.site-header .brand').click();
 	await expect(page.locator('#mobile-menu')).toBeHidden();
 	expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe('');
@@ -336,10 +332,10 @@ test('dark theme: follows the OS before first paint, toggles, and remembers the 
 	await toggle.click();
 	await expect(root).toHaveAttribute('data-theme', 'light');
 	await page.reload();
-	await expect(root).toHaveAttribute('data-theme', 'light'); // stored choice beats the OS
+	await expect(root).toHaveAttribute('data-theme', 'light');
 	await page.evaluate(() => localStorage.removeItem('theme'));
 	await page.reload();
-	await expect(root).toHaveAttribute('data-theme', 'dark'); // back to the OS setting
+	await expect(root).toHaveAttribute('data-theme', 'dark');
 	await context.close();
 });
 
@@ -393,16 +389,13 @@ test('full-screen sections snap under the header; tall sections scroll freely; f
 		return page.evaluate(() => scrollY);
 	};
 	if (!isMobile) {
-		// Keyboard paging lands exactly on the next section, under the 65px header.
 		await page.keyboard.press('PageDown');
-		// Poll: the smooth scroll can start a beat after the key press when the machine is busy.
 		await expect
 			.poll(() =>
 				page.locator('#about').evaluate((el) => Math.round(el.getBoundingClientRect().top))
 			)
 			.toBe(65);
 	}
-	// Inside the (taller than the screen) Projects deck, the page can rest mid-section.
 	const mid = await page
 		.locator('#projects')
 		.evaluate(
@@ -413,7 +406,6 @@ test('full-screen sections snap under the header; tall sections scroll freely; f
 		window.scrollTo(0, y);
 	}, mid);
 	expect(Math.abs((await settle()) - mid)).toBeLessThan(2);
-	// The bottom of the page (footer) is a snap point too.
 	await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
 	await settle();
 	expect(
@@ -430,13 +422,13 @@ test('intro loader: covers the first load of a session, locks scroll, lifts with
 	const root = page.locator('html');
 	await expect(root).toHaveAttribute('data-loader', 'on');
 	await expect(page.getByRole('status').filter({ hasText: 'Loading' })).toBeAttached();
-	await expect(page.locator('h1')).toBeAttached(); // the page is rendered underneath
+	await expect(page.locator('h1')).toBeAttached();
 	await page.mouse.wheel(0, 500);
-	expect(await page.evaluate(() => scrollY)).toBe(0); // locked while up
+	expect(await page.evaluate(() => scrollY)).toBe(0);
 	await expect(root).not.toHaveAttribute('data-loader', /.+/, { timeout: 3500 });
 	await expect(page.locator('.ld')).toHaveCount(0, { timeout: 2000 });
 	await page.reload({ waitUntil: 'domcontentloaded' });
-	await expect(root).not.toHaveAttribute('data-loader', /.+/); // same tab: skipped
+	await expect(root).not.toHaveAttribute('data-loader', /.+/);
 	await context.close();
 });
 
@@ -451,7 +443,6 @@ test('intro loader is skipped with reduced motion', async ({ browser }) => {
 
 test('failed images and a failed 3D scene fall back gracefully', async ({ page }) => {
 	await page.route(/\/images\/projects\//, (r) => r.abort());
-	// Built chunk names are hashes, so find the three.js chunk by its contents and block it.
 	await page.route(/\.js(\?|$)/, async (route) => {
 		const response = await route.fetch();
 		const body = await response.text();
@@ -465,7 +456,7 @@ test('failed images and a failed 3D scene fall back gracefully', async ({ page }
 	const shot = page.locator('#projects .deck-card').first().locator('.screen img');
 	await shot.scrollIntoViewIfNeeded();
 	await expect(shot).toHaveAttribute('data-img', 'error');
-	await expect(shot).toHaveAttribute('alt', /.+/); // still described for screen readers
+	await expect(shot).toHaveAttribute('alt', /.+/);
 	const label = await page
 		.locator('#projects .deck-card')
 		.first()
@@ -494,7 +485,7 @@ test('next topic: the panel resizes over several frames and ends clean', async (
 	await page.getByRole('button', { name: 'Next topic' }).click();
 	const xs = await heights;
 	const distinct = new Set(xs).size;
-	if (xs[0] !== xs.at(-1)) expect(distinct).toBeGreaterThan(4); // glided, didn't snap
+	if (xs[0] !== xs.at(-1)) expect(distinct).toBeGreaterThan(4);
 	const stage = page.locator('#ap-panel [data-key]').locator('..');
 	await expect(stage).toHaveAttribute('style', /^$|^(?!.*height)/);
 	await expect(page.locator('#ap-panel [data-key]')).toHaveCount(1);

@@ -11,8 +11,6 @@
 		.map((c) => (c.note ? `${c.label} (${c.note.toLowerCase()})` : c.label))
 		.join(', ');
 
-	// First paragraph leads across the full column; the rest sit side by side once each column
-	// can hold a comfortable ~45-character line (container ≥ 720px).
 	const [first, ...rest] = about.paragraphs;
 	const groups = [
 		{
@@ -31,8 +29,6 @@
 </script>
 
 <Section id="about" n="01" label="About" heading={about.heading} draftOrigin="comet">
-	<!-- Card | text: the text column takes all remaining width, so the row spans the content column.
-	     Tablet (≤820px): card beside the text, top-aligned. Phone (<700px): card centred above. -->
 	<div
 		class="grid grid-cols-[284px_minmax(0,1fr)] items-center gap-x-[clamp(40px,5vw,72px)] gap-y-14 max-desk:items-start max-desk:gap-9 max-[700px]:grid-cols-[minmax(0,1fr)]"
 	>

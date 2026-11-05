@@ -1,10 +1,5 @@
 import type { Project } from './types';
 
-/**
- * Every fact here comes from the project's README, its repo, the live app,
- * or something Anthony said. Don't add claims that aren't sourced.
- * Image width/height are the real pixel sizes — pass them to <img> to avoid layout shift.
- */
 export const projects: Project[] = [
 	{
 		id: 'subpoena-colada',

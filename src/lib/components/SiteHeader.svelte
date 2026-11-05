@@ -19,7 +19,6 @@
 
 	onMount(() => {
 		const stop = active.observe();
-		// Close the menu if the viewport grows past the breakpoint while it's open.
 		const wide = window.matchMedia('(min-width: 821px)');
 		const onWide = () => {
 			if (wide.matches) open = false;
@@ -31,7 +30,6 @@
 		};
 	});
 
-	// While open: lock page scroll and move focus into the panel.
 	$effect(() => {
 		if (!open) return;
 		const root = document.documentElement;
@@ -48,7 +46,6 @@
 		menuButton?.focus();
 	}
 
-	/** Mobile menu link: close first (so the scroll lock is released), then scroll to the section. */
 	async function goTo(event: MouseEvent, id: string) {
 		event.preventDefault();
 		open = false;
@@ -68,7 +65,6 @@
 			return;
 		}
 		if (event.key !== 'Tab' || !panel || !menuButton) return;
-		// Focus trap: the menu button + everything inside the panel.
 		const focusables = [
 			menuButton,
 			...panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')
@@ -168,13 +164,6 @@
 	</div>
 </header>
 
-<!--
-  The panel is a sibling of <header>, not a child: the header's backdrop-filter makes it the
-  containing block for position:fixed descendants, which squeezed the panel into the 64px bar.
-  It fills the viewport under the bar, scrolls on its own (short landscape screens) without
-  chaining the scroll to the page behind, and clears the home indicator. `hidden` wins over the
-  flex display (Tailwind's preflight makes [hidden] display:none !important).
--->
 <nav
 	id="mobile-menu"
 	class="fixed inset-x-0 top-16 bottom-0 z-19 flex animate-menu-in flex-col overflow-y-auto overscroll-contain bg-surface px-[clamp(20px,5vw,48px)] pt-2 pb-[calc(28px_+_env(safe-area-inset-bottom,0px))] motion-reduce:animate-none"

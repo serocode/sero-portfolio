@@ -1,63 +1,38 @@
-/*
- * Dark mode for "Paper & Ember". Imported from src/app.css.
- *
- * How it works: every colour is a token (CSS variable). Light values live in @theme;
- * :root[data-theme='dark'] overrides the same variables, so every Tailwind utility
- * (bg-paper, text-ink, border-line…) and every var(--color-…) flips at once.
- * Nothing in components should hard-code a hex colour.
- *
- * "Mirror, don't just darken": what is dark in light mode (contact panel, photo-card back,
- * primary buttons, logo tile) uses the `inverse` tokens and turns light in dark mode.
- */
-
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* New tokens (light values). Keep any of these you already have under the same name. */
 @theme {
-	--color-surface: #ffffff; /* cards, menus, inputs — sits on paper */
-	--color-chip: #f3f4f6; /* stack chips, segmented controls, address bars */
-	--color-line-strong: #d5d9df; /* outlined buttons */
-	--color-strong: #2c333b; /* button labels, emphasised body */
-	--color-subtle: #7d8690; /* hero tagline grey */
+	--color-surface: #ffffff;
+	--color-chip: #f3f4f6;
+	--color-line-strong: #d5d9df;
+	--color-strong: #2c333b;
+	--color-subtle: #7d8690;
 
-	/* Inverted surfaces: contact panel, card back, primary button, logo tile */
 	--color-inverse: #0d1117;
 	--color-on-inverse: #ffffff;
 	--color-inverse-body: #b9c1cb;
 	--color-inverse-muted: #9aa3ad;
 	--color-inverse-line: #262d36;
-	--color-inverse-accent: #f97316; /* accent text on the inverse surface */
+	--color-inverse-accent: #f97316;
 	--color-inverse-placeholder: #c4b5fd;
 
-	/* Text on an orange fill (location pill, badge core, button hovers). Dark in both themes:
-	   light text on #f97316 would fall well under 4.5:1. */
 	--color-on-accent: #0d1117;
 
-	/* Decorative */
-	--color-numeral: #eceef1; /* Approach's big background number */
-	--color-dots: #b8c0ca; /* dot grid behind the About card */
-	--color-dot-off: #d9dde2; /* Skills: tool not used by a project */
-	--color-dot-fade: #fdba8c; /* Skills: used, but not by the selected project */
+	--color-numeral: #eceef1;
+	--color-dots: #b8c0ca;
+	--color-dot-off: #d9dde2;
+	--color-dot-fade: #fdba8c;
 }
 
-/* Not Tailwind tokens (no utilities needed), so they live outside @theme where they can't be
-   tree-shaken: the hero scene reads them from JS. */
 :root {
 	color-scheme: light;
 
-	/* Hero 3D (read by hero-scene.ts via getComputedStyle) */
 	--scene-base: #b4bcc6;
 	--scene-peak: #ea580c;
 	--scene-ring: #9aa3ad;
 
-	/* Shadows: rgb(var(--shadow-rgb) / calc(α * var(--shadow-k))). Dark mode uses pure black,
-	   ~1.7× stronger, because ink-tinted shadows vanish on a near-black ground. */
 	--shadow-rgb: 13 17 23;
 	--shadow-k: 1;
 
-	/* Visitor cursor: a rounded collaborator dart in the accent (see the cursor rules in app.css and
-	   CollabCursor.svelte). A data URL can't read CSS variables, so these repeat the accent /
-	   accent-700 / paper hexes — keep them in sync. Hotspot at the tip (3 3). */
 	--cursor-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M3 3L19 8.8L11.4 11.4L8.8 19Z' fill='%23f97316' stroke='%23ffffff' stroke-width='2.6' stroke-linejoin='round' paint-order='stroke'/%3E%3Cpath d='M3 3L19 8.8L11.4 11.4L8.8 19Z' fill='none' stroke='%23f97316' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E")
 		3 3;
 	--cursor-link: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M3 3L19 8.8L11.4 11.4L8.8 19Z' fill='%23c2410c' stroke='%23ffffff' stroke-width='2.6' stroke-linejoin='round' paint-order='stroke'/%3E%3Cpath d='M3 3L19 8.8L11.4 11.4L8.8 19Z' fill='none' stroke='%23c2410c' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E")
@@ -67,13 +42,11 @@
 :root[data-theme="dark"] {
 	color-scheme: dark;
 
-	/* Visitor cursor on dark paper; clickable state uses the dark accent-700 (see above). */
 	--cursor-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M3 3L19 8.8L11.4 11.4L8.8 19Z' fill='%23f97316' stroke='%230b0f14' stroke-width='2.6' stroke-linejoin='round' paint-order='stroke'/%3E%3Cpath d='M3 3L19 8.8L11.4 11.4L8.8 19Z' fill='none' stroke='%23f97316' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E")
 		3 3;
 	--cursor-link: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M3 3L19 8.8L11.4 11.4L8.8 19Z' fill='%23fb923c' stroke='%230b0f14' stroke-width='2.6' stroke-linejoin='round' paint-order='stroke'/%3E%3Cpath d='M3 3L19 8.8L11.4 11.4L8.8 19Z' fill='none' stroke='%23fb923c' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E")
 		3 3;
 
-	/* Surfaces */
 	--color-paper: #0b0f14;
 	--color-surface: #12171e;
 	--color-mist: #161c24;
@@ -82,7 +55,6 @@
 	--color-line-soft: #1c232c;
 	--color-line-strong: #323b46;
 
-	/* Text */
 	--color-ink: #f3f4f6;
 	--color-strong: #d3d9df;
 	--color-body: #adb5bf;
@@ -90,7 +62,6 @@
 	--color-faint: #77818d;
 	--color-subtle: #8b95a1;
 
-	/* Ember — fills stay #f97316; small orange text gets lighter to pass 4.5:1 */
 	--color-accent: #f97316;
 	--color-accent-600: #fb923c;
 	--color-accent-700: #fb923c;
@@ -98,11 +69,10 @@
 
 	--color-placeholder: #a78bfa;
 
-	/* Inverted surfaces become light */
 	--color-inverse: #f3f4f6;
 	--color-on-inverse: #0b0f14;
 	--color-inverse-body: #4b5561;
-	--color-inverse-muted: #5f6975; /* kit had #68727e: 4.44:1 on the light inverse panel */
+	--color-inverse-muted: #5f6975;
 	--color-inverse-line: #d5d9df;
 	--color-inverse-accent: #c2410c;
 	--color-inverse-placeholder: #7c3aed;
@@ -120,8 +90,6 @@
 	--shadow-k: 1.7;
 }
 
-/* Smooth cross-fade only while switching (theme.svelte.ts adds .theme-switching for ~250ms),
-   so it never overrides components' own transitions the rest of the time. */
 .theme-switching,
 .theme-switching *,
 .theme-switching *::before,
@@ -139,7 +107,6 @@
 	}
 }
 
-/* Dark selection colour (an element default, like the light one in app.css's base layer). */
 :root[data-theme="dark"] ::selection {
 	background: rgba(249, 115, 22, 0.32);
 	color: #ffffff;

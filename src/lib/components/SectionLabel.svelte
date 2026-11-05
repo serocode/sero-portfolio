@@ -1,4 +1,3 @@
-<!-- "01 · ABOUT ——" row above each h2. `dark` is the variant used inside the Contact panel. -->
 <script lang="ts">
 	let {
 		n,
@@ -28,7 +27,6 @@
 		]}
 		>{label}</span
 	>
-	<!-- 28px accent segment on a 1px rule -->
 	<span
 		class={[
 			'h-0.5 flex-1 [background:linear-gradient(var(--color-accent),var(--color-accent))_left_center/28px_2px_no-repeat,linear-gradient(var(--rule),var(--rule))_left_center/100%_1px_no-repeat]',

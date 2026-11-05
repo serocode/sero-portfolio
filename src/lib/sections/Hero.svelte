@@ -6,13 +6,10 @@
 	import { hero, site } from '$lib/content/site';
 	import { fullScreen, wrap } from '$lib/ui';
 
-	/** Entrance animations wait while the intro loader is up (they play as its curtain lifts). */
 	const hold = 'loader-on:[animation-play-state:paused] motion-reduce:animate-none';
 
 	let canvas = $state<HTMLCanvasElement>();
-	/** The 3D figure's loading state: a skeleton until `ready`; a still dotted orb if `failed`. */
 	let scene3d = $state<'loading' | 'ready' | 'failed'>('loading');
-	/** The skeleton pulses only with JS running; without JS the still orb is the fallback. */
 	let hydrated = $state(false);
 
 	onMount(() => {
@@ -33,11 +30,11 @@
 						scene = createHeroScene(canvas);
 						settle('ready');
 					} catch {
-						settle('failed'); // No WebGL (old device, disabled GPU)
+						settle('failed');
 					}
 				})
 				.catch(() => {
-					if (!cancelled) settle('failed'); // chunk failed to download (offline, flaky network)
+					if (!cancelled) settle('failed');
 				});
 		};
 		const whenIdle = () => {
@@ -46,9 +43,6 @@
 					? window.requestIdleCallback(start, { timeout: 2500 })
 					: Number(setTimeout(start, 300));
 		};
-		// three.js stays out of the critical path. Under the intro loader nothing else is on screen,
-		// so start as soon as the fonts are in (not competing with them for bandwidth) and the sphere
-		// is usually ready when the curtain lifts. Otherwise: once the page has loaded and is idle.
 		if (document.documentElement.dataset.loader === 'on') {
 			(document.fonts?.ready ?? Promise.resolve()).then(() => {
 				if (!cancelled) start();
@@ -66,10 +60,6 @@
 	});
 </script>
 
-<!--
-  Mobile-first Tailwind: base classes are the ≤820px layout (canvas on top, single column);
-  `desk:` (≥821px, defined in app.css) is the two-column desktop layout.
--->
 <section
 	id="hero"
 	class="relative overflow-hidden border-b border-line-soft {fullScreen}"
@@ -92,7 +82,6 @@
 			</p>
 
 			<div class="animate-rise-lcp {hold} flex flex-col gap-1.5 desk:gap-2">
-				<!-- The space between the spans keeps the accessible name "Anthony Serojales." -->
 				<h1 id="hero-name" class="flex flex-col font-bold text-ink" data-draft="H1" data-draft-text>
 					<span
 						class="text-[clamp(24px,7vw,34px)] leading-[1.1] font-semibold tracking-[-0.03em] desk:text-[clamp(24px,3.3vw,42px)]"
@@ -112,7 +101,6 @@
 				</p>
 			</div>
 
-			<!-- ~2 balanced lines from 1280px up (the copy is ~1330px long on one line at 18px). -->
 			<p
 				data-draft="Intro"
 				data-draft-text
@@ -154,8 +142,6 @@
 		<figure
 			class="animate-fade-in {hold} relative order-first h-67.5 w-full min-w-0 desk:order-0 desk:ml-auto desk:h-[clamp(260px,34vw,440px)] desk:max-w-115 desk:flex-[0.75_1_340px]"
 		>
-			<!-- Loading states: a dotted-orb skeleton at the sphere's size sits behind the canvas (so
-			     nothing shifts), fades out when the scene is ready, and stays still if WebGL fails. -->
 			<span
 				class="scene-skel pointer-events-none absolute inset-0 grid place-items-center transition-opacity duration-500 ease-[ease] data-[state=ready]:opacity-0"
 				data-state={scene3d}

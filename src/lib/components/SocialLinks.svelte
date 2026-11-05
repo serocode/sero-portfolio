@@ -1,4 +1,3 @@
-<!-- GitHub / Facebook / Discord icon buttons (hero, footer, mobile menu). Missing hrefs render disabled. -->
 <script lang="ts">
 	import { heroSocials, socials } from '$lib/content/site';
 	import { iconLink } from '$lib/ui';
@@ -15,7 +14,6 @@
 		size?: number;
 		class?: string;
 		tone?: 'body' | 'muted';
-		/** Live-drafting labels (LiveDrafting.svelte): the whole list, or each icon link. */
 		draft?: string;
 		itemDraft?: string;
 	} = $props();
@@ -25,10 +23,8 @@
 		.filter((s) => s !== undefined);
 </script>
 
-<!-- Preflight already resets list margins/bullets, so callers position it with utilities (e.g. -ml-3). -->
 <ul class="socials flex items-center gap-0.5 {cls}" aria-label="Social links" data-draft={draft}>
 	{#each items as s (s.icon)}
-		<!-- data-cursor: the visitor cursor's tag shows the handle here (CollabCursor.svelte). -->
 		<li data-cursor={typeof s.handle === 'string' ? s.handle : undefined}>
 			<MaybeLink
 				href={s.href}

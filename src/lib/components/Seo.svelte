@@ -1,9 +1,7 @@
-<!-- <head> metadata: title, description, Open Graph, Twitter, canonical (only with a real URL), JSON-LD Person. -->
 <script lang="ts">
 	import { site, socials } from '$lib/content/site';
 
 	const url = typeof site.url === 'string' ? site.url.replace(/\/$/, '') : null;
-	// Relative until site.url is set; social crawlers need these absolute, so set site.url before launch.
 	const abs = (path: string) => (url ? `${url}${path}` : path);
 	const ogImage = abs('/og-image.png');
 	const logo = abs('/icon-512.png');
@@ -15,11 +13,9 @@
 		jobTitle: 'Software Developer',
 		address: { '@type': 'PostalAddress', addressCountry: 'PH' },
 		...(url ? { url } : {}),
-		// schema.org has no `logo` on Person; a personal brand's logo goes on its Brand.
 		brand: { '@type': 'Brand', name: `${site.initials}.`, logo },
 		sameAs: socials.map((s) => s.href).filter((href): href is string => typeof href === 'string')
 	};
-	// Escape "<" so the JSON can't close the script tag.
 	const jsonLd = `<script type="application/ld+json">${JSON.stringify(person).replace(/</g, '\\u003c')}</${'script'}>`;
 </script>
 
