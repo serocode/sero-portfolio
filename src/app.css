@@ -228,6 +228,10 @@
 /* App states set on <html> by the head script in app.html (see IntroLoader.svelte). */
 @custom-variant loader-on (:root[data-loader="on"] &);
 @custom-variant loader-out (:root[data-loader="out"] &);
+/* DevTools screen (StrangerScreen.svelte): `stranger:` while it shows (scroll locked),
+   `stranger-veiled:` once it fully covers the page (the site underneath is hidden, not unmounted). */
+@custom-variant stranger (:root[data-stranger] &);
+@custom-variant stranger-veiled (:root[data-stranger="veiled"] &);
 
 /* Element defaults — Tailwind's base layer, so utilities override them. Everything else is
    Tailwind classes in the markup (html/body classes are in app.html). */
@@ -244,12 +248,23 @@
 		color: var(--color-accent-800);
 	}
 	button {
-		cursor: pointer;
 		font: inherit;
 	}
-	::selection {
-		background: rgba(249, 115, 22, 0.24);
-		color: var(--color-ink);
+	:where(button:not(:disabled), [role="button"], summary, label) {
+		cursor: pointer;
+	}
+	/* Visitor cursor (tokens in theme.css): an accent collaborator dart, a deeper accent on
+	   anything clickable (text isn't selectable, so no I-beam). Its identity tag is CollabCursor.svelte.
+	   Mouse/trackpad only, and left native when the visitor asks for more contrast (they may
+	   also have enlarged their system pointer, which a custom image would ignore). Disabled
+	   placeholders keep `cursor-not-allowed`. */
+	@media (pointer: fine) and (prefers-contrast: no-preference) {
+		html {
+			cursor: var(--cursor-arrow), auto;
+		}
+		:where(a[href], button:not(:disabled), [role="button"], summary, label) {
+			cursor: var(--cursor-link), pointer;
+		}
 	}
 	:where(a, button, [tabindex]):focus-visible {
 		outline: 2px solid var(--color-accent-600);

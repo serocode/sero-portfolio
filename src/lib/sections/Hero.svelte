@@ -71,6 +71,7 @@
   `desk:` (≥821px, defined in app.css) is the two-column desktop layout.
 -->
 <section
+	id="hero"
 	class="relative overflow-hidden border-b border-line-soft {fullScreen}"
 	aria-labelledby="hero-name"
 	data-draft-group

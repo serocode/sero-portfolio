@@ -4,6 +4,8 @@
  * and an orange comet with a fading trail that circles the ring. Follows the pointer gently.
  *
  * Usage (client only):  const scene = createHeroScene(canvas);  …  scene.dispose();
+ * A second copy (the DevTools screen, StrangerScreen.svelte) passes { publishComet: false } so it
+ * doesn't move the hero comet that live drafting launches from (src/lib/three/comet.ts).
  * Load it with a dynamic import inside onMount so three.js stays out of the initial bundle.
  *
  * Theme-aware: colours come from the CSS variables --scene-base, --scene-peak, --scene-ring and
@@ -43,7 +45,10 @@ function readPalette() {
 const CAMERA_Z = 8.2;
 const RING_RADIUS = 2.25;
 
-export function createHeroScene(canvas: HTMLCanvasElement): HeroScene {
+export function createHeroScene(
+	canvas: HTMLCanvasElement,
+	{ publishComet: publish = true }: { publishComet?: boolean } = {}
+): HeroScene {
 	const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 	const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -250,7 +255,7 @@ export function createHeroScene(canvas: HTMLCanvasElement): HeroScene {
 		group.rotation.x = 0.18 + rx;
 		placeComet(t);
 		renderer.render(scene, camera);
-		publishComet();
+		if (publish) publishComet();
 		raf = visible ? requestAnimationFrame(frame) : 0;
 	};
 	const still = () => {
@@ -309,7 +314,7 @@ export function createHeroScene(canvas: HTMLCanvasElement): HeroScene {
 			sg.dispose();
 			sm.dispose();
 			renderer.dispose();
-			cometPos.ready = false;
+			if (publish) cometPos.ready = false;
 		}
 	};
 }

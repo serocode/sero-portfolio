@@ -24,7 +24,9 @@
 		'font-mono text-[clamp(10px,4.2cqi,11px)] leading-[1.3] tracking-[0.08em] text-inverse-muted uppercase';
 </script>
 
+<!-- data-cursor: the visitor cursor's tag names the person in the photo (CollabCursor.svelte). -->
 <div
+	data-cursor={site.name}
 	class="holo-tilt [--bg-x:50%] [--bg-y:50%] [--holo-o:0] [transform:perspective(1000px)_rotateX(0deg)_rotateY(0deg)] will-change-transform"
 	use:holoTilt={{ flipped }}
 >

@@ -28,7 +28,8 @@
 <!-- Preflight already resets list margins/bullets, so callers position it with utilities (e.g. -ml-3). -->
 <ul class="socials flex items-center gap-0.5 {cls}" aria-label="Social links" data-draft={draft}>
 	{#each items as s (s.icon)}
-		<li>
+		<!-- data-cursor: the visitor cursor's tag shows the handle here (CollabCursor.svelte). -->
+		<li data-cursor={typeof s.handle === 'string' ? s.handle : undefined}>
 			<MaybeLink
 				href={s.href}
 				label={s.label}

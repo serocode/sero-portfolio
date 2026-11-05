@@ -54,10 +54,24 @@
 	   ~1.7× stronger, because ink-tinted shadows vanish on a near-black ground. */
 	--shadow-rgb: 13 17 23;
 	--shadow-k: 1;
+
+	/* Visitor cursor: a rounded collaborator dart in the accent (see the cursor rules in app.css and
+	   CollabCursor.svelte). A data URL can't read CSS variables, so these repeat the accent /
+	   accent-700 / paper hexes — keep them in sync. Hotspot at the tip (3 3). */
+	--cursor-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M3 3L19 8.8L11.4 11.4L8.8 19Z' fill='%23f97316' stroke='%23ffffff' stroke-width='2.6' stroke-linejoin='round' paint-order='stroke'/%3E%3Cpath d='M3 3L19 8.8L11.4 11.4L8.8 19Z' fill='none' stroke='%23f97316' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E")
+		3 3;
+	--cursor-link: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M3 3L19 8.8L11.4 11.4L8.8 19Z' fill='%23c2410c' stroke='%23ffffff' stroke-width='2.6' stroke-linejoin='round' paint-order='stroke'/%3E%3Cpath d='M3 3L19 8.8L11.4 11.4L8.8 19Z' fill='none' stroke='%23c2410c' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E")
+		3 3;
 }
 
 :root[data-theme="dark"] {
 	color-scheme: dark;
+
+	/* Visitor cursor on dark paper; clickable state uses the dark accent-700 (see above). */
+	--cursor-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M3 3L19 8.8L11.4 11.4L8.8 19Z' fill='%23f97316' stroke='%230b0f14' stroke-width='2.6' stroke-linejoin='round' paint-order='stroke'/%3E%3Cpath d='M3 3L19 8.8L11.4 11.4L8.8 19Z' fill='none' stroke='%23f97316' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E")
+		3 3;
+	--cursor-link: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Cpath d='M3 3L19 8.8L11.4 11.4L8.8 19Z' fill='%23fb923c' stroke='%230b0f14' stroke-width='2.6' stroke-linejoin='round' paint-order='stroke'/%3E%3Cpath d='M3 3L19 8.8L11.4 11.4L8.8 19Z' fill='none' stroke='%23fb923c' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E")
+		3 3;
 
 	/* Surfaces */
 	--color-paper: #0b0f14;

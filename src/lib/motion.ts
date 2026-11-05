@@ -14,23 +14,29 @@ const EASE_CSS = 'cubic-bezier(0.33, 1, 0.68, 1)';
 /** How far content slides when it's swapped for the next (px). */
 const SLIDE = 28;
 
-type SwapParams = { dir?: 1 | -1; out?: boolean };
+type SwapParams = { dir?: 1 | -1; out?: boolean; axis?: 'x' | 'y' };
 
 /**
  * Swap one "card" of content for the next, in the same grid cell: the old one slides out the way
  * you're going and fades quickly; the new one follows a beat later from the other side. The two
  * barely overlap, so text never sits on text. dir: +1 = next (content moves left), -1 = previous.
+ * axis 'y' slides vertically instead (+1 = content moves up), e.g. a label that follows scrolling.
  *
  *   {#key key}<div in:swap={{ dir }} out:swap={{ dir, out: true }}>…</div>{/key}
  */
-export function swap(_node: Element, { dir = 1, out = false }: SwapParams = {}): TransitionConfig {
+export function swap(
+	_node: Element,
+	{ dir = 1, out = false, axis = 'x' }: SwapParams = {}
+): TransitionConfig {
 	if (prefersReducedMotion()) return { duration: 0 };
+	const fn = axis === 'y' ? 'translateY' : 'translateX';
+	const dist = axis === 'y' ? SLIDE / 3 : SLIDE;
 	const outMs = Math.round(MOTION_MS * 0.4);
 	if (out) {
 		return {
 			duration: outMs,
 			easing: ease,
-			css: (t, u) => `opacity: ${t}; transform: translateX(${-dir * SLIDE * u}px)`
+			css: (t, u) => `opacity: ${t}; transform: ${fn}(${-dir * dist * u}px)`
 		};
 	}
 	const delay = Math.round(outMs * 0.6);
@@ -38,7 +44,7 @@ export function swap(_node: Element, { dir = 1, out = false }: SwapParams = {}):
 		delay,
 		duration: MOTION_MS - delay,
 		easing: ease,
-		css: (t, u) => `opacity: ${t}; transform: translateX(${dir * SLIDE * u}px)`
+		css: (t, u) => `opacity: ${t}; transform: ${fn}(${dir * dist * u}px)`
 	};
 }
 
