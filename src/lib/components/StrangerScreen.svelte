@@ -1,16 +1,3 @@
-<!--
-  While the browser's DevTools are open (src/lib/devtools.ts), the site gives way to one quiet
-  screen: the hero's 3D sphere and "Hello stranger" (src/lib/content/stranger.ts), and the console
-  greets the visitor the same way. Close DevTools and the site is back exactly as it was.
-
-  A visual deterrent, not protection. The site underneath is never unmounted: it's covered, then
-  hidden (`stranger-veiled:invisible` on the page) once the screen is opaque, and scrolling is
-  locked (`stranger:overflow-hidden` on <body>, plus the scroll keys), so scroll position, open
-  tabs, flipped cards and filters all survive. Desktop Chromium only.
-  In `pnpm dev`, open the site with ?nostranger to switch it off for that tab while you debug
-  (?stranger switches it back on).
-  Reduced motion: no fades or blur, and the sphere is a still frame.
--->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { blur, fade } from 'svelte/transition';
@@ -24,7 +11,6 @@
 	let sceneReady = $state(false);
 	const ms = (n: number) => (prefersReducedMotion() ? 0 : n);
 
-	/** The console greeting: an accent tag like the site's collaborator cursors, in its own fonts. */
 	function greet() {
 		const css = getComputedStyle(document.documentElement);
 		const v = (name: string) => css.getPropertyValue(name).trim();
@@ -41,7 +27,6 @@
 		);
 	}
 
-	/** Dev only: ?nostranger turns the screen off for this tab (kept across reloads), ?stranger on. */
 	function devOptOut() {
 		const q = new URLSearchParams(location.search);
 		try {
@@ -59,7 +44,6 @@
 		return watchDevtools({
 			onChange: (next) => {
 				open = next;
-				// Closing: show the site again first, then the screen fades off it.
 				if (!next) delete document.documentElement.dataset.stranger;
 				else document.documentElement.dataset.stranger = '';
 			},
@@ -67,9 +51,6 @@
 		});
 	});
 
-	// The page can't scroll underneath: <body> is overflow-hidden (wheel, touchpad), and Chrome still
-	// scrolls the page from the keyboard, so those keys do nothing while the screen is up. Keys
-	// with a modifier (zoom, shortcuts) pass through.
 	const SCROLL_KEYS = new Set([' ', 'PageUp', 'PageDown', 'Home', 'End', 'ArrowUp', 'ArrowDown']);
 	$effect(() => {
 		if (!open) return;
@@ -80,8 +61,6 @@
 		return () => window.removeEventListener('keydown', onKey);
 	});
 
-	// The hero's scene, a second copy (three.js is already cached from the hero) for as long as the
-	// screen is up. It doesn't publish its comet, so live drafting keeps launching from the hero's.
 	$effect(() => {
 		if (!canvas) return;
 		const el = canvas;
@@ -93,7 +72,7 @@
 				scene = createHeroScene(el, { publishComet: false });
 				sceneReady = true;
 			})
-			.catch(() => {}); // no WebGL / chunk failed: the words stand alone
+			.catch(() => {});
 		return () => {
 			cancelled = true;
 			scene?.dispose();

@@ -4,8 +4,6 @@
  * and an orange comet with a fading trail that circles the ring. Follows the pointer gently.
  *
  * Usage (client only):  const scene = createHeroScene(canvas);  …  scene.dispose();
- * A second copy (the DevTools screen, StrangerScreen.svelte) passes { publishComet: false } so it
- * doesn't move the hero comet that live drafting launches from (src/lib/three/comet.ts).
  * Load it with a dynamic import inside onMount so three.js stays out of the initial bundle.
  *
  * Theme-aware: colours come from the CSS variables --scene-base, --scene-peak, --scene-ring and

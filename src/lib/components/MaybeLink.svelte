@@ -1,7 +1,7 @@
 <!--
   A link whose target may not be supplied yet.
   - href is a string → a real <a> (external links open in a new tab and say so).
-  - href is missing(...) → a <button aria-disabled="true"> with a "coming soon" title. Never href="#".
+  - href is missing(...) or null → a <button aria-disabled="true"> with a "coming soon" title. Never href="#".
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
@@ -19,7 +19,7 @@
 		draft,
 		children
 	}: {
-		href: string | Missing;
+		href: string | Missing | null;
 		class?: string;
 		/** Accessible name when the visible content is only an icon. */
 		label?: string;

@@ -10,7 +10,8 @@ export const site = {
 	/** Set this once the domain is known; used for canonical + og:url. */
 	url: 'https://serocode.vercel.app' as string | Missing,
 	email: 'gaserojales.dev@gmail.com' as string | Missing,
-	// resume: missing('[résumé PDF]') as string | Missing,
+	/** Résumé PDF URL. `null` keeps every résumé link disabled ("coming soon"). */
+	resume: null as string | Missing | null,
 	/** About card photo (static/images/). `null` shows the placeholder. */
 	photo: {
 		src: '/images/anthony.webp',

@@ -85,7 +85,7 @@
 						<span>Résumé</span>
 						{#if isMissing(site.resume)}
 							<Placeholder dark small text={site.resume.placeholder} />
-						{:else}
+						{:else if site.resume}
 							<span class="font-mono text-[12px] text-inverse-muted">PDF</span>
 						{/if}
 					</MaybeLink>

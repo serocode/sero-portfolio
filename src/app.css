@@ -228,8 +228,6 @@
 /* App states set on <html> by the head script in app.html (see IntroLoader.svelte). */
 @custom-variant loader-on (:root[data-loader="on"] &);
 @custom-variant loader-out (:root[data-loader="out"] &);
-/* DevTools screen (StrangerScreen.svelte): `stranger:` while it shows (scroll locked),
-   `stranger-veiled:` once it fully covers the page (the site underneath is hidden, not unmounted). */
 @custom-variant stranger (:root[data-stranger] &);
 @custom-variant stranger-veiled (:root[data-stranger="veiled"] &);
 
