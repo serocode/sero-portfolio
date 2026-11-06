@@ -356,6 +356,100 @@ export const projects: Project[] = [
 		]
 	},
 	{
+		id: 'lobbers',
+		title: 'Lobbers',
+		kind: 'Personal project · Multiplayer game',
+		badges: [
+			{
+				label: 'Live',
+				tone: 'live'
+			}
+		],
+		description:
+			'A turn-based 4v4 artillery game for the browser, inspired by Gunbound and Worms. Aim, power and wind decide every shot, and every explosion carves the terrain for good. No backend: one player’s browser hosts the match and friends join with a room code.',
+		highlights: [
+			'Destructible terrain — one pixel mask is both the collision geometry and what’s drawn, so every crater is real',
+			'Six battlefields, eight machines with their own abilities, and ten weapons — cluster, drill, lightning, gravity, airstrike and more',
+			'Peer to peer over WebRTC: the host’s browser runs and checks every move; dropped players rejoin their seat, and the host can refresh mid-match',
+			'One deterministic rules package drives online and local play, tested by full 1v1–4v4 matches and a real 4-player WebRTC browser test'
+		],
+		stack: [
+			'TypeScript',
+			'React',
+			'Phaser 3',
+			'WebRTC · PeerJS',
+			'Vite',
+			'localStorage',
+			'Playwright',
+			'Vercel',
+			'pnpm monorepo'
+		],
+		links: [
+			{
+				label: 'Play it',
+				href: 'https://sero-lobbers.vercel.app/',
+				variant: 'primary'
+			},
+			{
+				label: 'Source',
+				href: 'https://github.com/serocode/lobbers',
+				variant: 'ghost'
+			}
+		],
+		views: [
+			{
+				label: 'Game',
+				type: 'browser',
+				addressBar: 'Lobbers',
+				background: '#101522',
+				shots: [
+					{
+						src: '/images/projects/lobbers/home.webp',
+						width: 1451,
+						height: 840,
+						label: 'Home',
+						caption: 'Home — host a room, join one with a code, or pass and play'
+					},
+					{
+						src: '/images/projects/lobbers/shell-in-flight.webp',
+						width: 1451,
+						height: 840,
+						label: 'Shot',
+						caption: 'A heavy bomb in flight on Cobalt Crags — the camera follows the shell'
+					},
+					{
+						src: '/images/projects/lobbers/crater.webp',
+						width: 1451,
+						height: 840,
+						label: 'Crater',
+						caption: 'The impact carves a crater into the terrain for good'
+					},
+					{
+						src: '/images/projects/lobbers/skyreach-overview.webp',
+						width: 1451,
+						height: 840,
+						label: 'Skyreach',
+						caption: 'Overview of Skyreach Isles — 4v4 across islands over the void'
+					},
+					{
+						src: '/images/projects/lobbers/machines.webp',
+						width: 1451,
+						height: 840,
+						label: 'Machines',
+						caption: 'Eight machines, each with its own stats, special and ultimate'
+					},
+					{
+						src: '/images/projects/lobbers/armory.webp',
+						width: 1451,
+						height: 840,
+						label: 'Armory',
+						caption: 'The armory — ten weapons with damage, radius, ammo and cooldown'
+					}
+				]
+			}
+		]
+	},
+	{
 		id: 'kortex',
 		title: 'Kortex',
 		kind: 'Online assessment platform',

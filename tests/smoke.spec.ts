@@ -99,14 +99,14 @@ test('the card back fits at 240–300px card widths', async ({ page }) => {
 test('skills filter changes the readout', async ({ page }) => {
 	await page.goto('/');
 	const readout = page.locator('#skills [aria-live="polite"]');
-	await expect(readout).toContainText('25 tools across 6 projects.');
+	await expect(readout).toContainText('26 tools across 7 projects.');
 	const medicore = page.locator('#skills').getByRole('button', { name: 'MediCore' });
 	await medicore.focus();
 	await page.keyboard.press('Enter');
 	await expect(medicore).toHaveAttribute('aria-pressed', 'true');
-	await expect(readout).toContainText('MediCore uses 16 of these 25 tools.');
+	await expect(readout).toContainText('MediCore uses 16 of these 26 tools.');
 	await page.keyboard.press('Enter');
-	await expect(readout).toContainText('25 tools across 6 projects.');
+	await expect(readout).toContainText('26 tools across 7 projects.');
 });
 
 test('Approach tabs move with arrow keys', async ({ page }) => {
