@@ -32,7 +32,8 @@ role, developer by practice. Built with SvelteKit, fully prerendered, in light a
 ## Features
 
 - **Full-screen sections** that snap under the sticky header; taller sections scroll freely.
-- **3D hero** (three.js) loaded off the critical path, paused when off-screen, recoloured per theme.
+- **3D hero** (three.js): a self-solving 3×3 Rubik's cube with a dotted orbit ring and comet,
+  loaded off the critical path, paused when off-screen, recoloured per theme.
 - **Dark theme** driven entirely by design tokens, set before first paint (no white flash).
 - **Loading states:** an intro loader on the first visit of a session (skipped for reduced motion
   and without JavaScript), skeletons for the 3D hero and every screenshot while they load, and quiet

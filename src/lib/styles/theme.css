@@ -26,9 +26,17 @@
 :root {
 	color-scheme: light;
 
-	--scene-base: #b4bcc6;
-	--scene-peak: #ea580c;
+	--scene-base: #b4bcc6; /* hero skeleton dots */
 	--scene-ring: #9aa3ad;
+
+	/* Hero Rubik's cube: stickers are the same in both themes; the body lifts in dark. */
+	--cube-body: #161b22;
+	--cube-1: #f97316; /* +x orange */
+	--cube-2: #9a3412; /* -x ember */
+	--cube-3: #f1f5f9; /* +y paper */
+	--cube-4: #fdba74; /* -y peach */
+	--cube-5: #5b6675; /* +z slate */
+	--cube-6: #a9b3bf; /* -z mist */
 
 	--shadow-rgb: 13 17 23;
 	--shadow-k: 1;
@@ -83,8 +91,8 @@
 	--color-dot-fade: #7c3a14;
 
 	--scene-base: #4a5462;
-	--scene-peak: #fdba74;
 	--scene-ring: #56606d;
+	--cube-body: #232b36;
 
 	--shadow-rgb: 0 0 0;
 	--shadow-k: 1.7;
