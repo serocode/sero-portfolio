@@ -123,13 +123,13 @@
 					>
 				</a>
 				<MaybeLink
-					href={site.resume}
+					href={site.kofi.href}
 					class="inline-flex min-h-12.5 items-center justify-center gap-2 rounded-full border border-line-strong bg-transparent px-5 text-[15px] font-medium text-strong transition-colors not-aria-disabled:hover:border-ink not-aria-disabled:hover:text-accent-700 desk:min-h-13 desk:border-0 desk:px-2"
 					external
-					comingSoon="Résumé PDF coming soon"
+					comingSoon={site.kofi.comingSoon}
 					draft="Link"
 				>
-					<span>Résumé</span>
+					<span>{site.kofi.label}</span>
 					<span class="hidden desk:inline-flex"
 						><Icon name="arrow-up-right" size={14} strokeWidth={2} /></span
 					>

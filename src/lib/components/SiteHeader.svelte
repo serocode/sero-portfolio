@@ -11,7 +11,6 @@
 	import ThemeToggle from './ThemeToggle.svelte';
 
 	const active = new ActiveSection(nav.map((item) => item.id));
-	const resumeSoon = 'Résumé PDF coming soon';
 
 	let open = $state(false);
 	let menuButton = $state<HTMLButtonElement>();
@@ -134,14 +133,14 @@
 			<div class="flex items-center gap-2.5">
 				<ThemeToggle />
 				<MaybeLink
-					href={site.resume}
+					href={site.kofi.href}
 					class="inline-flex min-h-11 items-center gap-2 rounded-full border border-line-strong bg-surface px-4 text-[13px] font-medium text-strong {btnGhostHover}"
 					external
-					comingSoon={resumeSoon}
-					draft="Résumé"
+					comingSoon={site.kofi.comingSoon}
+					draft="Ko-fi"
 				>
-					<Icon name="download" size={14} strokeWidth={2} />
-					<span>Résumé</span>
+					<span class="flex text-accent-600"><Icon name="coffee" size={14} strokeWidth={2} /></span>
+					<span>{site.kofi.label}</span>
 				</MaybeLink>
 			</div>
 		</nav>
@@ -194,13 +193,16 @@
 		{/each}
 	</ol>
 	<MaybeLink
-		href={site.resume}
-		class="mt-7 flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-inverse text-[15px] font-medium text-on-inverse {btnPrimaryHover}"
+		href={site.kofi.href}
+		class="group mt-7 flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-inverse text-[15px] font-medium text-on-inverse {btnPrimaryHover}"
 		external
-		comingSoon={resumeSoon}
+		comingSoon={site.kofi.comingSoon}
 	>
-		<Icon name="download" size={15} strokeWidth={2} />
-		<span>Download résumé</span>
+		<span
+			class="flex text-inverse-accent transition-colors duration-[180ms] group-hover:text-on-accent"
+			><Icon name="coffee" size={15} strokeWidth={2} /></span
+		>
+		<span>{site.kofi.cta}</span>
 	</MaybeLink>
 	<div class="mt-auto flex items-center justify-between pt-7">
 		<p class="font-mono text-[12px] text-muted">Philippines</p>

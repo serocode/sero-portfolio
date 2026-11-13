@@ -10,6 +10,7 @@
 		| 'arrow-up-right'
 		| 'mail'
 		| 'download'
+		| 'coffee'
 		| 'map-pin'
 		| 'rotate'
 		| 'user'
@@ -70,6 +71,12 @@
 			<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
 			<polyline points="7 10 12 15 17 10" />
 			<line x1="12" y1="15" x2="12" y2="3" />
+		{:else if name === 'coffee'}
+			<path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+			<path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+			<line x1="6" y1="1" x2="6" y2="4" />
+			<line x1="10" y1="1" x2="10" y2="4" />
+			<line x1="14" y1="1" x2="14" y2="4" />
 		{:else if name === 'map-pin'}
 			<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
 			<circle cx="12" cy="10" r="3" />

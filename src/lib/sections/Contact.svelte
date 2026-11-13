@@ -79,12 +79,10 @@
 					</li>
 				{/each}
 				<li data-draft="Link">
-					<MaybeLink href={site.resume} external class={item} comingSoon="Résumé PDF coming soon">
-						<span>Résumé</span>
-						{#if isMissing(site.resume)}
-							<Placeholder dark small text={site.resume.placeholder} />
-						{:else if site.resume}
-							<span class="font-mono text-[12px] text-inverse-muted">PDF</span>
+					<MaybeLink href={site.kofi.href} external class={item} comingSoon={site.kofi.comingSoon}>
+						<span>{site.kofi.label}</span>
+						{#if isMissing(site.kofi.href)}
+							<Placeholder dark small text={site.kofi.href.placeholder} />
 						{/if}
 					</MaybeLink>
 				</li>

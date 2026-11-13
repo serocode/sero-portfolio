@@ -9,7 +9,13 @@ export const site = {
 	ogDescription: 'Building thoughtful digital experiences. HR by role, developer by practice.',
 	url: 'https://serocode.vercel.app' as string | Missing,
 	email: 'gaserojales.dev@gmail.com' as string | Missing,
-	resume: null as string | Missing | null,
+	kofi: {
+		href: 'https://ko-fi.com/serocode' as string | Missing | null,
+		label: 'Ko-fi',
+		cta: 'Support me on Ko-fi',
+		comingSoon: 'Ko-fi link coming soon'
+	},
+	visitors: { one: 'visitor', other: 'visitors' },
 	photo: {
 		src: '/images/anthony.webp',
 		width: 768,
