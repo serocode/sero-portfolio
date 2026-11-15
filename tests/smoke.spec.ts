@@ -223,7 +223,7 @@ test('axe: no accessibility violations (default + filtered + flipped)', async ({
 	await page.waitForTimeout(1200);
 	const run = async () => (await new AxeBuilder({ page }).analyze()).violations;
 	expect(await run()).toEqual([]);
-	await page.locator('#skills').getByRole('button', { name: 'Kortex' }).click();
+	await page.locator('#skills').getByRole('button', { name: 'Elsora' }).click();
 	await page.getByRole('button', { name: 'Flip the photo card to see credentials' }).click();
 	await page.waitForTimeout(1000);
 	const v = await run();
@@ -355,7 +355,7 @@ test('axe: no accessibility violations in dark theme (default + filtered + flipp
 			(x) => `${x.id}: ${x.nodes.map((n) => n.target.join(' ')).join(', ')}`
 		);
 	expect(await run()).toEqual([]);
-	await page.locator('#skills').getByRole('button', { name: 'Kortex' }).click();
+	await page.locator('#skills').getByRole('button', { name: 'Elsora' }).click();
 	await page.getByRole('button', { name: 'Flip the photo card to see credentials' }).click();
 	await page.waitForTimeout(1000);
 	expect(await run()).toEqual([]);

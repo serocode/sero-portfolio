@@ -9,7 +9,7 @@ export const projectColumns: Record<string, { short: string; code: string }> = {
 	'kitchen-counter': { short: 'Kitchen', code: 'KC' },
 	'stack-knockout': { short: 'Stack KO', code: 'SK' },
 	lobbers: { short: 'Lobbers', code: 'LB' },
-	kortex: { short: 'Kortex', code: 'KX' },
+	elsora: { short: 'Elsora', code: 'EL' },
 	medicore: { short: 'MediCore', code: 'MC' }
 };
 
@@ -18,19 +18,19 @@ const SC = 'subpoena-colada',
 	KC = 'kitchen-counter',
 	SK = 'stack-knockout',
 	LB = 'lobbers',
-	KX = 'kortex',
+	EL = 'elsora',
 	MC = 'medicore';
 
 export const skillGroups: { label: string; tools: { name: string; usedIn: string[] }[] }[] = [
 	{
 		label: 'Languages & UI',
 		tools: [
-			{ name: 'TypeScript · JavaScript', usedIn: [SC, KC, SK, LB, KX, MC] },
-			{ name: 'React', usedIn: [KC, SK, LB, MC] },
+			{ name: 'TypeScript · JavaScript', usedIn: [SC, KC, SK, LB, EL, MC] },
+			{ name: 'React', usedIn: [KC, SK, LB, EL, MC] },
 			{ name: 'Svelte · SvelteKit', usedIn: [SC] },
 			{ name: 'Next.js', usedIn: [KC] },
 			{ name: 'Phaser', usedIn: [LB] },
-			{ name: 'Tailwind CSS', usedIn: [SC, KC, MC] },
+			{ name: 'Tailwind CSS', usedIn: [SC, KC, EL, MC] },
 			{ name: 'HTML & CSS', usedIn: [SC, TU, KC, SK, LB, MC] }
 		]
 	},
@@ -38,39 +38,39 @@ export const skillGroups: { label: string; tools: { name: string; usedIn: string
 	{
 		label: 'Server & realtime',
 		tools: [
-			{ name: 'Node.js', usedIn: [KX, MC] },
-			{ name: 'Hono', usedIn: [MC] },
-			{ name: 'Better Auth', usedIn: [MC] },
+			{ name: 'Node.js', usedIn: [EL, MC] },
+			{ name: 'Hono', usedIn: [EL, MC] },
+			{ name: 'Better Auth', usedIn: [EL, MC] },
 			{ name: 'WebRTC · Trystero · PeerJS', usedIn: [SK, LB] }
 		]
 	},
 	{
 		label: 'Data',
 		tools: [
-			{ name: 'PostgreSQL', usedIn: [KX, MC] },
-			{ name: 'Drizzle ORM', usedIn: [KX, MC] },
-			{ name: 'Redis', usedIn: [KX] },
+			{ name: 'PostgreSQL', usedIn: [EL, MC] },
+			{ name: 'Drizzle ORM', usedIn: [EL, MC] },
+			{ name: 'Redis', usedIn: [EL] },
 			{ name: 'Browser storage', usedIn: [SC, SK, LB] }
 		]
 	},
 	{
 		label: 'Build & ship',
 		tools: [
-			{ name: 'Vite', usedIn: [SC, SK, LB, MC] },
+			{ name: 'Vite', usedIn: [SC, SK, LB, EL, MC] },
 			{ name: 'Vercel', usedIn: [SC, KC, SK, LB] },
-			{ name: 'Docker', usedIn: [MC] },
-			{ name: 'Turborepo', usedIn: [MC] },
-			{ name: 'pnpm workspaces', usedIn: [SK, LB, KX, MC] }
+			{ name: 'Docker', usedIn: [EL, MC] },
+			{ name: 'Turborepo', usedIn: [EL, MC] },
+			{ name: 'pnpm workspaces', usedIn: [SK, LB, EL, MC] }
 		]
 	},
 	{
 		label: 'Quality',
 		tools: [
-			{ name: 'Vitest', usedIn: [SK, MC] },
-			{ name: 'Playwright', usedIn: [LB, KX] },
-			{ name: 'Biome', usedIn: [MC] },
+			{ name: 'Vitest', usedIn: [SK, EL, MC] },
+			{ name: 'Playwright', usedIn: [LB, EL] },
+			{ name: 'Biome', usedIn: [EL, MC] },
 			{ name: 'ESLint', usedIn: [KC] },
-			{ name: 'Git & GitHub', usedIn: [SC, TU, KC, SK, LB, KX, MC] }
+			{ name: 'Git & GitHub', usedIn: [SC, TU, KC, SK, LB, EL, MC] }
 		]
 	}
 ];

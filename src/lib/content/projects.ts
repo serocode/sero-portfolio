@@ -450,51 +450,137 @@ export const projects: Project[] = [
 		]
 	},
 	{
-		id: 'kortex',
-		title: 'Kortex',
-		kind: 'Online assessment platform',
+		id: 'elsora',
+		title: 'Elsora',
+		kind: 'Assessment platform · SaaS',
 		badges: [
+			{
+				label: 'In development',
+				tone: 'neutral'
+			},
 			{
 				label: 'Private repo',
 				tone: 'private'
 			}
 		],
 		description:
-			'An analytics-native online assessment platform for educators, training teams and certification bodies. Item analysis, Bloom’s Taxonomy analytics and evidence-backed AI insights run in the background, so a submission is never held up.',
+			'An assessment platform for schools and training teams, being built as a SaaS. Authors publish in the Workspace, participants sit in the Room, and item analysis and Bloom’s Taxonomy coverage run in the background so a hand-in is never slowed down.',
 		highlights: [
-			'Assessment builder, question bank import, live sessions, timed and lockdown papers',
-			'Paper Mode — printed answer sheets read by an offline phone scanner',
-			'Two-factor sign-in for staff, roles and an audit trail'
+			'Question bank with CSV and XLSX import, an assessment builder, a marking queue and live sessions',
+			'The Room saves answers on the device first and sends them when there’s a connection',
+			'Paper mode — printed bubble sheets read by a phone Scanner with no signal',
+			'Two-factor sign-in for staff, per-workspace isolation and an audit trail'
 		],
 		stack: [
 			'TypeScript',
-			'Node.js',
+			'React',
+			'Hono',
+			'Better Auth',
 			'PostgreSQL',
-			'Redis',
 			'Drizzle ORM',
+			'Redis · BullMQ',
+			'Tailwind CSS',
 			'Playwright',
-			'pnpm monorepo'
+			'Turborepo'
 		],
 		links: [],
 		views: [
+			{
+				label: 'Workspace',
+				type: 'browser',
+				addressBar: 'Elsora Workspace',
+				background: '#ffffff',
+				shots: [
+					{
+						src: '/images/projects/elsora/workspace-home.webp',
+						width: 1451,
+						height: 840,
+						label: 'Home',
+						caption: 'Workspace home — open assessments, submissions and who is sitting now'
+					},
+					{
+						src: '/images/projects/elsora/assessments.webp',
+						width: 1451,
+						height: 840,
+						label: 'Assessments',
+						caption: 'Every assessment with its contents, availability and submissions'
+					},
+					{
+						src: '/images/projects/elsora/question-bank.webp',
+						width: 1451,
+						height: 840,
+						label: 'Question bank',
+						caption:
+							'Question bank — Bloom’s level, discrimination and how often each option was chosen'
+					},
+					{
+						src: '/images/projects/elsora/analytics.webp',
+						width: 1451,
+						height: 840,
+						label: 'Analytics',
+						caption: 'Item analysis — score summary and what stands out, worst first'
+					},
+					{
+						src: '/images/projects/elsora/paper-mode.webp',
+						width: 1451,
+						height: 840,
+						label: 'Paper mode',
+						caption: 'Paper mode — print the booklet and a personalised answer sheet per student'
+					},
+					{
+						src: '/images/projects/elsora/marking.webp',
+						width: 1451,
+						height: 840,
+						label: 'Marking',
+						caption: 'Marking queue — written answers waiting longest come first'
+					}
+				]
+			},
+			{
+				label: 'Room & Scanner',
+				type: 'phones',
+				shots: [
+					{
+						src: '/images/projects/elsora/room-home.webp',
+						width: 390,
+						height: 823,
+						label: 'Room',
+						caption: 'The Room — what a participant can sit'
+					},
+					{
+						src: '/images/projects/elsora/room-question.webp',
+						width: 390,
+						height: 823,
+						label: 'Sitting',
+						caption: 'Sitting a timed check — each answer saved as it’s chosen'
+					},
+					{
+						src: '/images/projects/elsora/scanner.webp',
+						width: 390,
+						height: 823,
+						label: 'Scanner',
+						caption: 'The Scanner — a paper downloaded to the phone, ready to photograph sheets'
+					}
+				]
+			},
 			{
 				label: 'Architecture',
 				type: 'diagram',
 				caption: 'Architecture — from the project README',
 				ariaLabel:
-					'Kortex architecture: dashboard, quiz and phone scanner apps call the API; a worker runs analytics; PostgreSQL and Redis underneath',
+					'Elsora architecture: the Workspace, Room and phone Scanner apps call the API; a worker runs analytics and reports; PostgreSQL and Redis underneath',
 				rows: [
 					[
 						{
-							label: 'Dashboard',
+							label: 'Workspace',
 							kind: 'plain'
 						},
 						{
-							label: 'Quiz',
+							label: 'Room',
 							kind: 'plain'
 						},
 						{
-							label: 'Phone scanner',
+							label: 'Scanner',
 							kind: 'plain'
 						}
 					],
@@ -504,7 +590,7 @@ export const projects: Project[] = [
 							kind: 'key'
 						},
 						{
-							label: 'Worker · analytics',
+							label: 'Worker · analytics, reports',
 							kind: 'soft'
 						}
 					],
