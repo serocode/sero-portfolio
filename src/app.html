@@ -28,6 +28,22 @@
 					document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#0b0f14');
 				}
 
+				// Scroll-driven 3D (hero explosion runway, project helix): only with motion allowed,
+				// WebGL present and a device that isn't obviously low-end. Otherwise the page keeps
+				// the flat layouts (project deck, still hero runway-free).
+				try {
+					const n = navigator;
+					if (
+						!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches &&
+						'WebGLRenderingContext' in window &&
+						!n.connection?.saveData &&
+						!((n.hardwareConcurrency || 8) < 4) &&
+						!(n.deviceMemory && n.deviceMemory < 4)
+					) {
+						r.dataset.three = 'on';
+					}
+				} catch {}
+
 				try {
 					if (
 						!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches &&

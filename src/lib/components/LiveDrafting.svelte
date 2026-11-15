@@ -93,7 +93,8 @@
 			fx = createLiveDrafting({
 				gsap,
 				ScrollTrigger,
-				groups: groups.filter((g) => g.targets.length),
+				// Skip groups that aren't laid out (e.g. the project deck while the helix shows).
+				groups: groups.filter((g) => g.targets.length && g.node?.getClientRects().length),
 				name,
 				speed,
 				hold,

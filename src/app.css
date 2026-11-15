@@ -206,6 +206,8 @@
 @custom-variant loader-on (:root[data-loader="on"] &);
 @custom-variant loader-out (:root[data-loader="out"] &);
 @custom-variant stranger (:root[data-stranger] &);
+/* Set by the head script in app.html when the scroll-driven 3D runs (motion + WebGL + capable). */
+@custom-variant three-on (:root[data-three="on"] &);
 @custom-variant stranger-veiled (:root[data-stranger="veiled"] &);
 
 @layer base {

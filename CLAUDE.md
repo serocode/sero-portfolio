@@ -27,7 +27,10 @@ rather than redesigning.
   in its `@layer base`; the page-wide reduced-motion transition rule; dark token overrides and the
   theme cross-fade in `src/lib/styles/theme.css`; View Transition pseudo-elements in
   `src/lib/styles/theme-transition.css`. New animations: add an `--animate-*` token + `@keyframes`.
-- three.js for the hero only, loaded with a dynamic `import()` inside `onMount`.
+- three.js for the hero cube and the projects helix, loaded with a dynamic `import()` inside
+  `onMount` (the helix only as its section approaches). GSAP (ScrollTrigger, Observer) is
+  lazy-loaded the same way. Scene code lives in `src/lib/three/`, scroll/gesture code in
+  `src/lib/motion/`, UI in the components.
 - Fonts: `@fontsource-variable/schibsted-grotesk`, `@fontsource-variable/jetbrains-mono`.
 - `@sveltejs/adapter-vercel`; the whole site is prerendered (`export const prerender = true`).
 - pnpm. Biome (`biome.json`) for linting and formatting.
@@ -50,26 +53,39 @@ rather than redesigning.
    real `alt` text from the data (`caption`). Body text contrast ≥ 4.5:1.
 4. **Motion:** everything animated has a `prefers-reduced-motion` path (hero renders one still
    frame; deck becomes a normal stack; no spin; no tilt).
-   The intro loader (`IntroLoader.svelte`, switched on by the head script in `app.html`) plays once
-   per session, never with reduced motion or without JS, waits only for critical readiness (fonts;
-   1.2s min, 3s max from navigation) and never for the 3D hero.
-   One motion spec for UI transitions: `src/lib/motion.ts` (480ms, ease-out-cubic — its CSS twin
-   is the `ease-smooth` token). Swapping content for the next uses `swap` (direction-aware slide,
-   no text-on-text) in a one-cell grid plus `HeightTween` so containers resize smoothly; sections
-   arrive with `use:reveal` + `revealItem` (src/lib/ui.ts).
-   Live drafting (`LiveDrafting.svelte` + `src/lib/motion/live-drafting.js`, GSAP lazy-loaded, off
-   with reduced motion): regions carry `data-draft-group`, elements `data-draft="Label"` (+
-   `data-draft-text` / `data-draft-fit`) — mark new UI the same way. Its overlay is clipped to
-   `<body>`, which therefore stays `relative`. Dispatch `layout-settled` on `window` after
-   animated layout changes so it re-measures (`HeightTween` already does).
+   Scroll-driven 3D is gated by `html[data-three="on"]` (head script in `app.html`: motion
+   allowed, WebGL, not Save-Data, ≥4 cores / ≥4GB) and the `three-on:` variant:
+   - Hero: the section gets a scroll runway with its content pinned; a scrubbed GSAP timeline
+     (`src/lib/motion/cube-explode.ts`) explodes the cube (corners → edges → centres) and
+     reassembles it on the way back. Offsets are recomputed from progress every frame on top of
+     each cubie's pose — never accumulated. No runway without the flag or if the scene fails.
+   - Projects: a pinned stage over a tall track; scroll turns a 3D helix of project cards
+     (`helix-scene.ts` renders, `helix-motion.ts` maps scroll with detents + drag/touch/horizontal
+     wheel with inertia). Details, links and "Explore" (the full `ProjectCard` in a `<dialog>`)
+     are DOM. Without the flag, or if the scene fails, the sticky deck is shown instead.
+     Don't dispatch `layout-settled` for size changes inside a pinned stage (`HeightTween({
+   announce: false })`) — it triggers a global ScrollTrigger refresh that cancels smooth scrolls.
+     The intro loader (`IntroLoader.svelte`, switched on by the head script in `app.html`) plays once
+     per session, never with reduced motion or without JS, waits only for critical readiness (fonts;
+     1.2s min, 3s max from navigation) and never for the 3D hero.
+     One motion spec for UI transitions: `src/lib/motion.ts` (480ms, ease-out-cubic — its CSS twin
+     is the `ease-smooth` token). Swapping content for the next uses `swap` (direction-aware slide,
+     no text-on-text) in a one-cell grid plus `HeightTween` so containers resize smoothly; sections
+     arrive with `use:reveal` + `revealItem` (src/lib/ui.ts).
+     Live drafting (`LiveDrafting.svelte` + `src/lib/motion/live-drafting.js`, GSAP lazy-loaded, off
+     with reduced motion): regions carry `data-draft-group`, elements `data-draft="Label"` (+
+     `data-draft-text` / `data-draft-fit`) — mark new UI the same way. Its overlay is clipped to
+     `<body>`, which therefore stays `relative`. Dispatch `layout-settled` on `window` after
+     animated layout changes so it re-measures (`HeightTween` already does).
 5. **Performance:** images use the `width`/`height` from the data + `loading="lazy"` below the fold;
-   three.js not in the initial bundle; pause the WebGL loop when the hero is off-screen (already
+   three.js not in the initial bundle; nothing heavy during the intro (hero shaders compile with
+   `compileAsync`; reflections + shadows switch on after load); pause the WebGL loop when the hero is off-screen (already
    done in `hero-scene.ts`). Lighthouse ≥ 95 on Performance, Accessibility, Best Practices, SEO.
    Late-loading images use `use:imageState` inside an `.img-frame` that reserves their box
    (skeleton while loading, fallback tile on error — `imgFrame` / `imgFade` in `src/lib/ui.ts`); the hero scene
    has its own `loading → ready | failed` skeleton. Text is prerendered, so it gets no skeleton.
 6. **Responsive:** 1440 → 390px with no horizontal scroll. The one breakpoint that changes layout is
-   820px (nav → menu button, deck keeps its sticky stack with a tighter stair-step, Approach tabs
+   820px (nav → menu button, the helix panel stacks and the fallback deck keeps its sticky stack with a tighter stair-step, Approach tabs
    become a wrapping grid, skills columns become 2-letter codes). About alone adds a 700px step
    (card beside text on tablets, stacked on phones).
 
@@ -81,7 +97,8 @@ rather than redesigning.
   (`--header-h`), content centred vertically, growing when it needs more. The document snaps
   (`scroll-snap-type: y mandatory` on `html`, `proximity` with reduced motion); each section snaps
   `start`, the footer snaps `end`, and `scroll-padding-top: var(--header-h)` keeps snaps and anchor
-  jumps exactly under the header. Don't add nested scroll containers or fixed section heights.
+  jumps exactly under the header. Don't add nested scroll containers or fixed section heights
+  (the only exceptions: the hero runway and the projects helix track, both behind `three-on:`).
 - Section label row: mono number in `accent-700` (13px) · uppercase mono label in `muted`
   (12px, 0.14em tracking) · a 240px rule with a 28px accent segment on a 1px `line`.
 - h2: `clamp(30px, 4.2vw, 48px)`, weight 600, line-height 1.08, letter-spacing −0.035em, `ink`.

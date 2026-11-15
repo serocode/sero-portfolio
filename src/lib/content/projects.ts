@@ -692,3 +692,19 @@ export const projects: Project[] = [
 		]
 	}
 ];
+
+/** Copy for the Projects section chrome (helix controls, detail dialog). */
+export const projectsSection = {
+	heading: "Things I've built.",
+	sub: (count: string) =>
+		`${count} projects, one at a time — keep scrolling to bring the next one forward.`,
+	hint: 'Scroll or drag to turn',
+	listLabel: 'Projects',
+	goTo: (title: string) => `Show ${title}`,
+	prev: 'Previous project',
+	next: 'Next project',
+	explore: 'Explore project',
+	exploreFor: (title: string) => `Explore ${title}`,
+	close: 'Close project details',
+	github: { label: 'Everything else on GitHub', href: 'https://github.com/serocode' }
+};

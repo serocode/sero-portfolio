@@ -118,8 +118,17 @@ test('Approach tabs move with arrow keys', async ({ page }) => {
 	await expect(page.getByRole('tabpanel')).toContainText('I know the work behind the system.');
 });
 
-test('project thumbnails switch shots with arrow keys', async ({ page }) => {
+test('project thumbnails switch shots with arrow keys (in the helix detail dialog)', async ({
+	page
+}) => {
 	await page.goto('/');
+	// Arrive at the start of the helix track (the stage is pinned there).
+	const trackTop = await page
+		.locator('#projects [style*="--steps"]')
+		.evaluate((el) => el.getBoundingClientRect().top + scrollY - 65);
+	await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), trackTop);
+	await page.getByRole('button', { name: 'Explore Subpoena Colada' }).click();
+	await expect(page.getByRole('dialog')).toBeVisible();
 	const thumbs = page
 		.getByRole('list', { name: 'Subpoena Colada screenshots' })
 		.getByRole('button');
@@ -176,12 +185,17 @@ test('Approach tabs fit inside the viewport on phones (no sideways scroller)', a
 	}
 });
 
-test('project deck stays sticky on phones and the stuck card recedes under the next', async ({
+test('project deck (lite devices) stays sticky on phones and the stuck card recedes under the next', async ({
 	page,
 	isMobile
 }) => {
 	test.skip(!isMobile, 'phone layout');
+	// A low-end device gets the deck instead of the 3D helix.
+	await page.addInitScript(() =>
+		Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 2 })
+	);
 	await page.goto('/');
+	await expect(page.locator('html')).not.toHaveAttribute('data-three', 'on');
 	const cards = page.locator('.deck-card');
 	expect(await cards.first().evaluate((el) => getComputedStyle(el).position)).toBe('sticky');
 	const second = await cards.nth(1).evaluate((el) => el.getBoundingClientRect().top + scrollY);
@@ -389,12 +403,14 @@ test('full-screen sections snap under the header; tall sections scroll freely; f
 		return page.evaluate(() => scrollY);
 	};
 	if (!isMobile) {
-		await page.keyboard.press('PageDown');
-		await expect
-			.poll(() =>
-				page.locator('#about').evaluate((el) => Math.round(el.getBoundingClientRect().top))
-			)
-			.toBe(65);
+		// The hero has a scroll runway (cube explosion), so it can take more than one PageDown.
+		const aboutTop = () =>
+			page.locator('#about').evaluate((el) => Math.round(el.getBoundingClientRect().top));
+		for (let i = 0; i < 3 && (await aboutTop()) !== 65; i++) {
+			await page.keyboard.press('PageDown');
+			await settle();
+		}
+		expect(await aboutTop()).toBe(65);
 	}
 	const mid = await page
 		.locator('#projects')
@@ -453,6 +469,9 @@ test('failed images and a failed 3D scene fall back gracefully', async ({ page }
 	await expect(page.locator('.scene-skel')).toHaveAttribute('data-state', 'failed', {
 		timeout: 8000
 	});
+	// The helix can't load either → the projects fall back to the deck.
+	await page.locator('#projects').scrollIntoViewIfNeeded();
+	await expect(page.locator('#projects .deck-card').first()).toBeVisible({ timeout: 8000 });
 	const shot = page.locator('#projects .deck-card').first().locator('.screen img');
 	await shot.scrollIntoViewIfNeeded();
 	await expect(shot).toHaveAttribute('data-img', 'error');
@@ -510,4 +529,113 @@ test('sections rise in on arrival; without JS nothing is hidden', async ({ page,
 		.evaluateAll((els) => els.map((el) => getComputedStyle(el).opacity));
 	expect(opacities.every((o) => o === '1')).toBe(true);
 	await noJs.close();
+});
+
+test('projects helix: scroll turns it, buttons and ticks move focus, Explore opens the full card', async ({
+	page
+}) => {
+	await page.goto('/');
+	await expect(page.locator('html')).toHaveAttribute('data-three', 'on');
+	const track = page.locator('#projects [style*="--steps"]');
+	// During a swap the outgoing title is still there; the newest one is last.
+	const title = page.locator('#projects [data-key] h3').last();
+	const stepPx = await page.evaluate(() => innerHeight * 0.62);
+	const trackTop = await track.evaluate((el) => el.getBoundingClientRect().top + scrollY - 65);
+	await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), trackTop);
+	await expect(page.locator('#projects canvas')).toHaveClass(/opacity-100/, { timeout: 8000 });
+	await expect(title).toHaveText('Subpoena Colada');
+	// The stage is pinned under the header while the track passes.
+	const stageTop = () =>
+		page
+			.locator('#projects .sticky')
+			.first()
+			.evaluate((el) => el.getBoundingClientRect().top);
+	await expect.poll(stageTop).toBeCloseTo(65, 0);
+	await page.evaluate(
+		(y) => window.scrollTo({ top: y, behavior: 'instant' }),
+		trackTop + stepPx * 2
+	);
+	await expect(title).toHaveText('Kitchen Counter');
+	await expect.poll(stageTop).toBeCloseTo(65, 0);
+	// Scrolling back reverses it.
+	await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), trackTop + stepPx);
+	await expect(title).toHaveText('TockUp');
+	await page.getByRole('button', { name: 'Next project' }).click();
+	await expect(title).toHaveText('Kitchen Counter');
+	await page.getByRole('button', { name: 'Show MediCore' }).click();
+	await expect(title).toHaveText('MediCore');
+	await expect(page.getByRole('button', { name: 'Show MediCore' })).toHaveAttribute(
+		'aria-current',
+		'true'
+	);
+	await expect(page.getByRole('button', { name: 'Next project' })).toBeDisabled();
+	const explore = page.getByRole('button', { name: 'Explore MediCore' });
+	await explore.click();
+	const dialog = page.getByRole('dialog', { name: 'MediCore' });
+	await expect(dialog).toBeVisible();
+	await expect(dialog.getByRole('link', { name: /Source/ })).toBeVisible();
+	expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe('hidden');
+	await page.keyboard.press('Escape');
+	await expect(dialog).toBeHidden();
+	await expect(explore).toBeFocused();
+	expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe('');
+});
+
+test('projects helix: a horizontal drag turns to the next project', async ({ page, isMobile }) => {
+	test.skip(isMobile, 'mouse drag');
+	await page.goto('/');
+	const track = page.locator('#projects [style*="--steps"]');
+	const trackTop = await track.evaluate((el) => el.getBoundingClientRect().top + scrollY - 65);
+	await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), trackTop);
+	const canvas = page.locator('#projects canvas');
+	await expect(canvas).toHaveClass(/opacity-100/, { timeout: 8000 });
+	const box = await canvas.boundingBox();
+	if (!box) throw new Error('no canvas');
+	const y = box.y + box.height * 0.3;
+	await page.mouse.move(box.x + box.width * 0.6, y);
+	await page.mouse.down();
+	await page.mouse.move(box.x + box.width * 0.35, y, { steps: 12 });
+	await page.mouse.up();
+	await expect(page.locator('#projects [data-key] h3').last()).toHaveText('TockUp');
+	// The page followed the helix, so scrolling stays in sync.
+	expect(await page.evaluate(() => scrollY)).toBeGreaterThan(trackTop + 100);
+});
+
+test('hero cube explodes with scroll through its runway and reassembles on the way back', async ({
+	page
+}) => {
+	await page.goto('/');
+	const canvas = page.locator('#hero canvas');
+	await expect(page.locator('.scene-skel')).toHaveAttribute('data-state', 'ready', {
+		timeout: 8000
+	});
+	const runway = await page
+		.locator('#hero')
+		.evaluate((el) => el.getBoundingClientRect().height - innerHeight + 65);
+	expect(runway).toBeGreaterThan(200);
+	await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), runway / 2);
+	await expect(canvas).toHaveAttribute('data-explode', '0.50');
+	// Content stays pinned while the cube comes apart.
+	expect(
+		await page.locator('#hero-name').evaluate((el) => el.getBoundingClientRect().top)
+	).toBeGreaterThan(65);
+	await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), runway);
+	await expect(canvas).toHaveAttribute('data-explode', '1.00');
+	await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+	await expect(canvas).toHaveAttribute('data-explode', '0.00');
+});
+
+test('reduced motion: no hero runway, no helix', async ({ browser }) => {
+	const context = await browser.newContext({ reducedMotion: 'reduce' });
+	const page = await context.newPage();
+	await page.goto('/');
+	await expect(page.locator('html')).not.toHaveAttribute('data-three', /.+/);
+	const { hero, vh } = await page.evaluate(() => ({
+		hero: document.getElementById('hero')?.getBoundingClientRect().height ?? 0,
+		vh: innerHeight
+	}));
+	expect(hero).toBeLessThanOrEqual(vh);
+	await expect(page.locator('#projects canvas')).toBeHidden();
+	await expect(page.locator('#projects .deck-card').first()).toBeVisible();
+	await context.close();
 });
