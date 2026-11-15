@@ -4,19 +4,45 @@
 	import MaybeLink from '$lib/components/MaybeLink.svelte';
 	import SocialLinks from '$lib/components/SocialLinks.svelte';
 	import { hero, site } from '$lib/content/site';
+	import type { HeroScene } from '$lib/three/hero-scene';
 	import { fullScreen, wrap } from '$lib/ui';
 
 	const hold = 'loader-on:[animation-play-state:paused] motion-reduce:animate-none';
 
 	let canvas = $state<HTMLCanvasElement>();
+	let section = $state<HTMLElement>();
 	let scene3d = $state<'loading' | 'ready' | 'failed'>('loading');
 	let hydrated = $state(false);
 
 	onMount(() => {
 		hydrated = true;
-		let scene: { dispose(): void } | undefined;
+		let scene: HeroScene | undefined;
+		let explode: { kill(): void } | undefined;
 		let cancelled = false;
 		let idle = 0;
+
+		// Scroll runway (data-three="on"): scrubbing through it explodes the cube and back.
+		const bindExplosion = (s: HeroScene) => {
+			if (document.documentElement.dataset.three !== 'on' || !section) return;
+			Promise.all([
+				import('gsap'),
+				import('gsap/ScrollTrigger'),
+				import('$lib/motion/cube-explode')
+			])
+				.then(([{ gsap }, { ScrollTrigger }, { bindCubeExplosion }]) => {
+					if (cancelled || !section) return;
+					explode = bindCubeExplosion({
+						gsap,
+						ScrollTrigger,
+						trigger: section,
+						explosion: s.explosion,
+						onProgress: (p) => {
+							if (canvas) canvas.dataset.explode = p.toFixed(2);
+						}
+					});
+				})
+				.catch(() => {});
+		};
 
 		const settle = (state: 'ready' | 'failed') => {
 			scene3d = state;
@@ -27,8 +53,13 @@
 				.then(({ createHeroScene }) => {
 					if (cancelled || !canvas) return;
 					try {
-						scene = createHeroScene(canvas);
-						settle('ready');
+						const s = createHeroScene(canvas);
+						scene = s;
+						s.ready.then(() => {
+							if (cancelled) return;
+							settle('ready');
+							bindExplosion(s);
+						});
 					} catch {
 						settle('failed');
 					}
@@ -55,14 +86,22 @@
 			window.removeEventListener('load', whenIdle);
 			if ('cancelIdleCallback' in window) window.cancelIdleCallback(idle);
 			else clearTimeout(idle);
+			explode?.kill();
 			scene?.dispose();
 		};
 	});
 </script>
 
+<!-- With data-three="on" the hero is taller than the screen: its content stays pinned while the
+     extra scroll explodes the cube (a scrubbed timeline, reversible). No runway if the scene fails. -->
 <section
 	id="hero"
-	class="relative overflow-hidden border-b border-line-soft {fullScreen}"
+	bind:this={section}
+	class={[
+		'relative overflow-clip border-b border-line-soft',
+		fullScreen,
+		scene3d !== 'failed' && 'three-on:h-[calc(165svh_-_var(--header-h))] three-on:justify-start'
+	]}
 	aria-labelledby="hero-name"
 	data-draft-group
 	data-draft-origin="comet"
@@ -70,98 +109,107 @@
 	data-draft-cursors="5"
 >
 	<div
-		class="{wrap} flex flex-col pb-8 desk:flex-row desk:flex-wrap-reverse desk:items-center desk:gap-x-6 desk:gap-y-2 desk:pt-[clamp(20px,3vw,36px)] desk:pb-[clamp(36px,4.5vw,56px)]"
+		class="flex min-h-[calc(100svh_-_var(--header-h))] flex-col justify-center three-on:sticky three-on:top-(--header-h)"
 	>
-		<div class="flex min-w-0 flex-col gap-5 desk:max-w-190 desk:flex-[1_1_480px] desk:gap-7">
-			<p
-				class="animate-rise-1 {hold} font-mono text-[13px] tracking-[0.02em] text-accent-700"
-				data-draft="Eyebrow"
-				data-draft-text
-			>
-				{hero.eyebrow}
-			</p>
-
-			<div class="animate-rise-lcp {hold} flex flex-col gap-1.5 desk:gap-2">
-				<h1 id="hero-name" class="flex flex-col font-bold text-ink" data-draft="H1" data-draft-text>
-					<span
-						class="text-[clamp(24px,7vw,34px)] leading-[1.1] font-semibold tracking-[-0.03em] desk:text-[clamp(24px,3.3vw,42px)]"
-						>{hero.firstName}</span
-					>
-					<span
-						class="text-[clamp(48px,15vw,72px)] leading-[0.98] tracking-[-0.045em] whitespace-nowrap desk:text-[clamp(52px,7.2vw,72px)] desk:leading-[0.95]"
-						>{hero.lastName}<span class="text-accent-600">.</span></span
-					>
-				</h1>
-				<p
-					data-draft="Tagline"
-					data-draft-text
-					class="text-[28px] leading-[1.1] font-semibold tracking-[-0.035em] text-balance text-subtle desk:text-[clamp(24px,4.6vw,38px)] desk:leading-[1.08]"
-				>
-					{hero.taglineLead} <span class="text-accent-600">{hero.taglineAccent}</span>
-				</p>
-			</div>
-
-			<p
-				data-draft="Intro"
-				data-draft-text
-				class="hero-intro animate-rise-3 {hold} text-[15px] leading-[1.65] text-pretty desk:max-w-185 desk:text-[18px] desk:leading-[1.7] desk:text-balance"
-			>
-				{hero.intro}
-			</p>
-
-			<div
-				class="animate-rise-4 {hold} flex flex-wrap items-center gap-2.5 desk:gap-x-4 desk:gap-y-3.5"
-			>
-				<a
-					href="#contact"
-					data-draft="Button"
-					class="inline-flex min-h-12.5 flex-1 items-center justify-center gap-2.5 rounded-full bg-inverse px-6.5 text-[15px] font-medium text-on-inverse transition duration-200 hover:-translate-y-px hover:bg-accent hover:text-on-accent desk:min-h-13 desk:flex-none"
-				>
-					<span>Get in touch</span>
-					<span class="hidden desk:inline-flex"
-						><Icon name="arrow-right" size={16} strokeWidth={2} /></span
-					>
-				</a>
-				<MaybeLink
-					href={site.kofi.href}
-					class="inline-flex min-h-12.5 items-center justify-center gap-2 rounded-full border border-line-strong bg-transparent px-5 text-[15px] font-medium text-strong transition-colors not-aria-disabled:hover:border-ink not-aria-disabled:hover:text-accent-700 desk:min-h-13 desk:border-0 desk:px-2"
-					external
-					comingSoon={site.kofi.comingSoon}
-					draft="Link"
-				>
-					<span>{site.kofi.label}</span>
-					<span class="hidden desk:inline-flex"
-						><Icon name="arrow-up-right" size={14} strokeWidth={2} /></span
-					>
-				</MaybeLink>
-				<span class="hidden h-5.5 w-px bg-line desk:block" aria-hidden="true"></span>
-				<SocialLinks class="-ml-3 basis-full desk:ml-0 desk:basis-auto" draft="Socials" />
-			</div>
-		</div>
-
-		<figure
-			class="animate-fade-in {hold} relative order-first h-67.5 w-full min-w-0 desk:order-0 desk:ml-auto desk:h-[clamp(260px,34vw,440px)] desk:max-w-115 desk:flex-[0.75_1_340px]"
+		<div
+			class="{wrap} flex flex-col pb-8 desk:flex-row desk:flex-wrap-reverse desk:items-center desk:gap-x-6 desk:gap-y-2 desk:pt-[clamp(20px,3vw,36px)] desk:pb-[clamp(36px,4.5vw,56px)]"
 		>
-			<span
-				class="scene-skel pointer-events-none absolute inset-0 grid place-items-center transition-opacity duration-500 ease-[ease] data-[state=ready]:opacity-0"
-				data-state={scene3d}
-				aria-hidden="true"
-				><span
-					class={[
-						'aspect-square h-[66%] max-w-full rounded-full bg-[radial-gradient(var(--scene-base)_1.2px,transparent_1.6px)] bg-size-[11px_11px] opacity-55 mask-[radial-gradient(circle_closest-side,#000_72%,transparent_100%)]',
-						hydrated && scene3d === 'loading' && 'animate-orb-pulse motion-reduce:animate-none'
-					]}
-				></span></span
+			<div class="flex min-w-0 flex-col gap-5 desk:max-w-190 desk:flex-[1_1_480px] desk:gap-7">
+				<p
+					class="animate-rise-1 {hold} font-mono text-[13px] tracking-[0.02em] text-accent-700"
+					data-draft="Eyebrow"
+					data-draft-text
+				>
+					{hero.eyebrow}
+				</p>
+
+				<div class="animate-rise-lcp {hold} flex flex-col gap-1.5 desk:gap-2">
+					<h1
+						id="hero-name"
+						class="flex flex-col font-bold text-ink"
+						data-draft="H1"
+						data-draft-text
+					>
+						<span
+							class="text-[clamp(24px,7vw,34px)] leading-[1.1] font-semibold tracking-[-0.03em] desk:text-[clamp(24px,3.3vw,42px)]"
+							>{hero.firstName}</span
+						>
+						<span
+							class="text-[clamp(48px,15vw,72px)] leading-[0.98] tracking-[-0.045em] whitespace-nowrap desk:text-[clamp(52px,7.2vw,72px)] desk:leading-[0.95]"
+							>{hero.lastName}<span class="text-accent-600">.</span></span
+						>
+					</h1>
+					<p
+						data-draft="Tagline"
+						data-draft-text
+						class="text-[28px] leading-[1.1] font-semibold tracking-[-0.035em] text-balance text-subtle desk:text-[clamp(24px,4.6vw,38px)] desk:leading-[1.08]"
+					>
+						{hero.taglineLead} <span class="text-accent-600">{hero.taglineAccent}</span>
+					</p>
+				</div>
+
+				<p
+					data-draft="Intro"
+					data-draft-text
+					class="hero-intro animate-rise-3 {hold} text-[15px] leading-[1.65] text-pretty desk:max-w-185 desk:text-[18px] desk:leading-[1.7] desk:text-balance"
+				>
+					{hero.intro}
+				</p>
+
+				<div
+					class="animate-rise-4 {hold} flex flex-wrap items-center gap-2.5 desk:gap-x-4 desk:gap-y-3.5"
+				>
+					<a
+						href="#contact"
+						data-draft="Button"
+						class="inline-flex min-h-12.5 flex-1 items-center justify-center gap-2.5 rounded-full bg-inverse px-6.5 text-[15px] font-medium text-on-inverse transition duration-200 hover:-translate-y-px hover:bg-accent hover:text-on-accent desk:min-h-13 desk:flex-none"
+					>
+						<span>Get in touch</span>
+						<span class="hidden desk:inline-flex"
+							><Icon name="arrow-right" size={16} strokeWidth={2} /></span
+						>
+					</a>
+					<MaybeLink
+						href={site.kofi.href}
+						class="inline-flex min-h-12.5 items-center justify-center gap-2 rounded-full border border-line-strong bg-transparent px-5 text-[15px] font-medium text-strong transition-colors not-aria-disabled:hover:border-ink not-aria-disabled:hover:text-accent-700 desk:min-h-13 desk:border-0 desk:px-2"
+						external
+						comingSoon={site.kofi.comingSoon}
+						draft="Link"
+					>
+						<span>{site.kofi.label}</span>
+						<span class="hidden desk:inline-flex"
+							><Icon name="arrow-up-right" size={14} strokeWidth={2} /></span
+						>
+					</MaybeLink>
+					<span class="hidden h-5.5 w-px bg-line desk:block" aria-hidden="true"></span>
+					<SocialLinks class="-ml-3 basis-full desk:ml-0 desk:basis-auto" draft="Socials" />
+				</div>
+			</div>
+
+			<figure
+				class="animate-fade-in {hold} relative order-first h-67.5 w-full min-w-0 desk:order-0 desk:ml-auto desk:h-[clamp(260px,34vw,440px)] desk:max-w-115 desk:flex-[0.75_1_340px]"
 			>
-			<canvas
-				bind:this={canvas}
-				data-draft="Canvas"
-				class={[
-					'relative block size-full transition-opacity duration-600 ease-[ease]',
-					scene3d === 'ready' ? 'opacity-100' : 'opacity-0'
-				]}
-				aria-hidden="true"
-			></canvas>
-		</figure>
+				<span
+					class="scene-skel pointer-events-none absolute inset-0 grid place-items-center transition-opacity duration-500 ease-[ease] data-[state=ready]:opacity-0"
+					data-state={scene3d}
+					aria-hidden="true"
+					><span
+						class={[
+							'aspect-square h-[66%] max-w-full rounded-full bg-[radial-gradient(var(--scene-base)_1.2px,transparent_1.6px)] bg-size-[11px_11px] opacity-55 mask-[radial-gradient(circle_closest-side,#000_72%,transparent_100%)]',
+							hydrated && scene3d === 'loading' && 'animate-orb-pulse motion-reduce:animate-none'
+						]}
+					></span></span
+				>
+				<canvas
+					bind:this={canvas}
+					data-draft="Canvas"
+					class={[
+						'relative block size-full transition-opacity duration-600 ease-[ease]',
+						scene3d === 'ready' ? 'opacity-100' : 'opacity-0'
+					]}
+					aria-hidden="true"
+				></canvas>
+			</figure>
+		</div>
 	</div>
 </section>

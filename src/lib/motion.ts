@@ -38,6 +38,15 @@ export class HeightTween {
 	#el: HTMLElement | undefined;
 	#locked = false;
 	#done: ((e: TransitionEvent) => void) | null = null;
+	#announce: boolean;
+
+	/**
+	 * `announce: false` for containers whose height doesn't move the page (e.g. absolutely
+	 * positioned inside a pinned stage): no `layout-settled`, so nothing re-measures mid-scroll.
+	 */
+	constructor({ announce = true }: { announce?: boolean } = {}) {
+		this.#announce = announce;
+	}
 
 	attach(el: HTMLElement | undefined) {
 		this.#el = el;
@@ -73,7 +82,7 @@ export class HeightTween {
 			el.removeEventListener('transitionend', this.#done as (e: TransitionEvent) => void);
 			this.#done = null;
 			end();
-			window.dispatchEvent(new Event('layout-settled'));
+			if (this.#announce) window.dispatchEvent(new Event('layout-settled'));
 		};
 		el.addEventListener('transitionend', this.#done);
 	}

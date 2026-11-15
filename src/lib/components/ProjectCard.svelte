@@ -9,7 +9,22 @@
 	import { pad2 } from '$lib/utils/format';
 	import Icon from './Icon.svelte';
 
-	let { project, index, total }: { project: Project; index: number; total: number } = $props();
+	let {
+		project,
+		index,
+		total,
+		variant = 'deck',
+		idPrefix = ''
+	}: {
+		project: Project;
+		index: number;
+		total: number;
+		/** `deck`: the sticky stacking card. `plain`: a static card (the helix's detail dialog). */
+		variant?: 'deck' | 'plain';
+		idPrefix?: string;
+	} = $props();
+	const deck = $derived(variant === 'deck');
+	const titleId = $derived(`${idPrefix}${project.id}-title`);
 
 	let viewIdx = $state(0);
 
@@ -68,13 +83,17 @@
 </script>
 
 <article
-	class="deck-card sticky top-[min(var(--deck-top),calc(100svh_-_var(--card-h,0px)_-_24px_-_env(safe-area-inset-bottom,0px)))] flex origin-top flex-col gap-[22px] rounded-[28px] border border-line bg-surface p-[clamp(20px,2.6vw,32px)] shadow-[0_1px_2px_rgb(var(--shadow-rgb)/calc(0.04*var(--shadow-k))),0_-18px_48px_-32px_rgb(var(--shadow-rgb)/calc(0.28*var(--shadow-k))),0_30px_60px_-40px_rgb(var(--shadow-rgb)/calc(0.35*var(--shadow-k)))] will-change-transform [--deck-top:calc(88px_+_var(--i,0)_*_16px)] max-desk:rounded-[22px] max-desk:[--deck-top:calc(76px_+_var(--i,0)_*_10px)] motion-reduce:relative! motion-reduce:top-auto!"
-	aria-labelledby="{project.id}-title"
+	class={[
+		'flex flex-col gap-[22px] rounded-[28px] border border-line bg-surface p-[clamp(20px,2.6vw,32px)] max-desk:rounded-[22px]',
+		deck &&
+			'deck-card sticky top-[min(var(--deck-top),calc(100svh_-_var(--card-h,0px)_-_24px_-_env(safe-area-inset-bottom,0px)))] origin-top shadow-[0_1px_2px_rgb(var(--shadow-rgb)/calc(0.04*var(--shadow-k))),0_-18px_48px_-32px_rgb(var(--shadow-rgb)/calc(0.28*var(--shadow-k))),0_30px_60px_-40px_rgb(var(--shadow-rgb)/calc(0.35*var(--shadow-k)))] will-change-transform [--deck-top:calc(88px_+_var(--i,0)_*_16px)] max-desk:[--deck-top:calc(76px_+_var(--i,0)_*_10px)] motion-reduce:relative! motion-reduce:top-auto!'
+	]}
+	aria-labelledby={titleId}
 	style:--i={index}
 	use:fitSticky
-	data-draft-group
-	data-draft-card
-	data-draft-cursors="3"
+	data-draft-group={deck ? '' : undefined}
+	data-draft-card={deck ? '' : undefined}
+	data-draft-cursors={deck ? '3' : undefined}
 >
 	<div class="flex flex-wrap items-center justify-between gap-x-5 gap-y-2.5" data-draft="Header">
 		<p
@@ -318,7 +337,7 @@
 
 		<div class="flex min-w-0 flex-[1_1_340px] flex-col gap-4 max-desk:basis-full">
 			<h3
-				id="{project.id}-title"
+				id={titleId}
 				class="text-[clamp(28px,3vw,36px)] leading-[1.1] font-bold tracking-[-0.03em] text-ink"
 				data-draft="H3"
 				data-draft-text

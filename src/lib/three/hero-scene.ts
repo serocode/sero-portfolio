@@ -9,6 +9,13 @@
  *   position (`$lib/three/comet`) as the launch point for live drafting. It now passes behind the
  *   cube.
  * - Slow spin + gentle pointer tilt; the top face is tilted toward the viewer.
+ * - Exploded view: every cubie sits in an inner group that can be pushed out from the centre and
+ *   turned a little. The offset is recomputed from `explosion.cubelets[i].t` (0 → 1) every frame,
+ *   on top of the cubie's logical pose, so nothing accumulates: at t = 0 every piece is exactly
+ *   where the turn logic left it. Something else (GSAP ScrollTrigger in Hero.svelte, via
+ *   `$lib/motion/cube-explode`) writes those values; while any piece is out, no new turn starts.
+ * - Lighting: a room environment map for soft reflections, a key light casting shadows between
+ *   the cubies (visible once they separate), clear-coated stickers.
  *
  * Usage (client only): const scene = createHeroScene(canvas); … scene.dispose();
  * Pass { publishComet: false } for secondary copies of the scene (e.g. StrangerScreen) so they
@@ -26,28 +33,53 @@ import {
 	BoxGeometry,
 	BufferAttribute,
 	BufferGeometry,
+	CanvasTexture,
 	Clock,
 	Color,
 	DirectionalLight,
+	EquirectangularReflectionMapping,
 	Group,
 	HemisphereLight,
 	Matrix4,
 	Mesh,
 	MeshStandardMaterial,
 	Object3D,
+	PCFShadowMap,
 	PerspectiveCamera,
+	PMREMGenerator,
 	Points,
 	PointsMaterial,
+	Quaternion,
 	Scene,
 	ShaderMaterial,
 	Shape,
 	ShapeGeometry,
+	SRGBColorSpace,
+	type Texture,
 	Vector3,
 	WebGLRenderer
 } from 'three';
 import { comet as cometPos } from './comet';
 
-export type HeroScene = { dispose: () => void };
+/**
+ * Exploded-view state, written by the scroll timeline and read every frame.
+ * - `cubelets[i].t`: how far cubie i is out (0 = home, 1 = fully exploded). Index = identity.
+ * - `ring[i]`: 0 corner · 1 edge · 2 centre · 3 core — a Rubik's move never changes a piece's
+ *   kind, so this is a stable order to stagger by.
+ * - `overall.t`: the whole view (camera pull-back), 0 → 1.
+ */
+export type CubeExplosion = {
+	cubelets: { t: number }[];
+	ring: number[];
+	overall: { t: number };
+};
+
+export type HeroScene = {
+	dispose: () => void;
+	explosion: CubeExplosion;
+	/** Resolves once shaders are compiled (in parallel where supported) and the first frame is drawn. */
+	ready: Promise<void>;
+};
 
 type Palette = { accent: string; ring: string; body: string; faces: string[]; dark: boolean };
 
@@ -84,6 +116,19 @@ const NORMALS: [number, number, number][] = [
 ];
 
 type Move = { a: number; l: number; d: number; dur: number };
+
+/** Small deterministic PRNG so every cubie flies the same way on every visit. */
+function mulberry32(seed: number) {
+	let a = seed;
+	return () => {
+		a = (a + 0x6d2b79f5) | 0;
+		let t = Math.imul(a ^ (a >>> 15), 1 | a);
+		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+	};
+}
+
+const SPREAD = 1.15; // how far a corner travels, in multiples of its distance from the centre
 
 /** A box whose vertices are pushed out onto a rounded shell; normals point out of the shell. */
 function roundedCubie(): BoxGeometry {
@@ -129,9 +174,38 @@ export function createHeroScene(
 	const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 	renderer.setClearColor(0xffffff, 0);
+	// Shadows and reflections are switched on after load (see `enhance`), so none of their shader
+	// variants compile during the intro.
+	renderer.shadowMap.enabled = false;
+	renderer.shadowMap.type = PCFShadowMap;
 
 	let palette = readPalette();
 	const scene = new Scene();
+	// Reflections: a tiny procedural studio panorama (soft top light, a warm side card, darker
+	// floor). Small on purpose — PMREM-baking it costs a fraction of a room scene.
+	const studio = document.createElement('canvas');
+	studio.width = 128;
+	studio.height = 64;
+	const sctx = studio.getContext('2d');
+	if (sctx) {
+		const g = sctx.createLinearGradient(0, 0, 0, 64);
+		g.addColorStop(0, '#ffffff');
+		g.addColorStop(0.42, '#d9dee5');
+		g.addColorStop(0.6, '#8a929c');
+		g.addColorStop(1, '#2a3038');
+		sctx.fillStyle = g;
+		sctx.fillRect(0, 0, 128, 64);
+		sctx.fillStyle = '#ffffff';
+		sctx.fillRect(20, 6, 30, 14); // key softbox
+		sctx.fillStyle = '#e9c9ae';
+		sctx.fillRect(86, 20, 10, 16); // warm rim card
+	}
+	const studioTex = new CanvasTexture(studio);
+	studioTex.mapping = EquirectangularReflectionMapping;
+	studioTex.colorSpace = SRGBColorSpace;
+	let envMap: Texture | null = null;
+	// 0 → 1 as reflections fade in after `enhance`; the fill lights ease down to compensate.
+	let envMix = 0;
 	const camera = new PerspectiveCamera(35, 1, 0.1, 100);
 	camera.position.set(0, 0, CAMERA_Z);
 	const group = new Group();
@@ -141,14 +215,25 @@ export function createHeroScene(
 	const hemi = new HemisphereLight(0xffffff, 0xd8dde4, 1.9);
 	const key = new DirectionalLight(0xffffff, 2.6);
 	key.position.set(-3, 5, 6);
+	key.castShadow = true;
+	key.shadow.mapSize.set(1024, 1024);
+	key.shadow.camera.left = key.shadow.camera.bottom = -3.2;
+	key.shadow.camera.right = key.shadow.camera.top = 3.2;
+	key.shadow.camera.near = 1;
+	key.shadow.camera.far = 16;
+	key.shadow.bias = -0.0004;
+	key.shadow.normalBias = 0.025;
+	key.shadow.radius = 3;
 	const rim = new DirectionalLight(0xfb923c, 1.1);
 	rim.position.set(5, -1, -4);
 	scene.add(hemi, key, rim);
+	const mix = (a: number, b: number) => a + (b - a) * envMix;
 	const lightFor = (dark: boolean) => {
 		hemi.groundColor.set(dark ? 0x1a2029 : 0xd8dde4);
-		hemi.intensity = dark ? 1.5 : 1.9;
-		key.intensity = dark ? 2.4 : 2.6;
+		hemi.intensity = dark ? mix(1.5, 1.1) : mix(1.9, 1.45);
+		key.intensity = dark ? mix(2.4, 2.3) : mix(2.6, 2.4);
 		rim.intensity = dark ? 1.6 : 1.1;
+		scene.environmentIntensity = (dark ? 0.4 : 0.55) * envMix;
 	};
 	lightFor(palette.dark);
 
@@ -156,37 +241,98 @@ export function createHeroScene(
 	const bodyGeo = roundedCubie();
 	const bodyMat = new MeshStandardMaterial({
 		color: new Color(palette.body),
-		roughness: 0.55,
-		metalness: 0.05
+		roughness: 0.42,
+		metalness: 0.08
 	});
 	const stGeo = stickerShape();
 	const stMats = palette.faces.map(
-		(c) => new MeshStandardMaterial({ color: new Color(c), roughness: 0.32, metalness: 0 })
+		(c) =>
+			new MeshStandardMaterial({
+				color: new Color(c),
+				roughness: 0.26,
+				metalness: 0,
+				envMapIntensity: 1.25
+			})
 	);
 
 	const cube = new Group();
 	cube.scale.setScalar(1.15);
 	group.add(cube);
 	const cubies: Group[] = [];
+	const inners: Group[] = [];
+	const explosion: CubeExplosion = { cubelets: [], ring: [], overall: { t: 0 } };
+	// Per-cubie flight: travel factor, a turn (axis + angle) and a small sideways drift.
+	const flights: { dist: number; axis: Vector3; angle: number; drift: Vector3 }[] = [];
+	const rand = mulberry32(0x5e70);
 	for (let x = -1; x <= 1; x++)
 		for (let y = -1; y <= 1; y++)
 			for (let z = -1; z <= 1; z++) {
 				const piece = new Group();
 				piece.position.set(x * SPACING, y * SPACING, z * SPACING);
-				piece.add(new Mesh(bodyGeo, bodyMat));
+				const inner = new Group();
+				piece.add(inner);
+				const body = new Mesh(bodyGeo, bodyMat);
+				body.castShadow = true;
+				body.receiveShadow = true;
+				inner.add(body);
 				const at = [x, y, z];
 				NORMALS.forEach((n, f) => {
 					const axis = n[0] ? 0 : n[1] ? 1 : 2;
 					if (at[axis] !== n[0] + n[1] + n[2]) return;
 					const st = new Mesh(stGeo, stMats[f]);
+					st.receiveShadow = true;
 					const o = HALF + 0.002;
 					st.position.set(n[0] * o, n[1] * o, n[2] * o);
 					st.lookAt(n[0] * 2, n[1] * 2, n[2] * 2);
-					piece.add(st);
+					inner.add(st);
 				});
 				cube.add(piece);
 				cubies.push(piece);
+				inners.push(inner);
+				const kind = 3 - (Math.abs(x) + Math.abs(y) + Math.abs(z)); // 0 corner … 3 core
+				explosion.cubelets.push({ t: 0 });
+				explosion.ring.push(kind);
+				flights.push({
+					dist: 0.82 + rand() * 0.4,
+					axis: new Vector3(rand() - 0.5, rand() - 0.5, rand() - 0.5).normalize(),
+					angle: (0.35 + rand() * 0.75) * (rand() < 0.5 ? -1 : 1),
+					drift: new Vector3(rand() - 0.5, rand() - 0.5, rand() - 0.5).multiplyScalar(0.22)
+				});
 			}
+
+	// ── Exploded view: offset each inner group from its cubie's *current* pose ────────
+	const qIdentity = new Quaternion();
+	const qc = new Quaternion();
+	const qInv = new Quaternion();
+	const qTurn = new Quaternion();
+	const pc = new Vector3();
+	const off = new Vector3();
+	const exploding = () => explosion.overall.t > 0.0005;
+	const applyExplosion = () => {
+		for (let i = 0; i < cubies.length; i++) {
+			const inner = inners[i];
+			const t = explosion.cubelets[i].t;
+			if (t <= 0) {
+				inner.position.set(0, 0, 0);
+				inner.quaternion.identity();
+				continue;
+			}
+			const piece = cubies[i];
+			const f = flights[i];
+			// Pose in the cube's frame (a piece mid-turn hangs off the pivot).
+			const parentQ = piece.parent === pivot ? pivot.quaternion : qIdentity;
+			pc.copy(piece.position).applyQuaternion(parentQ);
+			qc.copy(parentQ).multiply(piece.quaternion);
+			off
+				.copy(pc)
+				.multiplyScalar(SPREAD * f.dist * t)
+				.addScaledVector(f.drift, t);
+			qInv.copy(qc).invert();
+			inner.position.copy(off).applyQuaternion(qInv);
+			qTurn.setFromAxisAngle(f.axis, f.angle * t);
+			inner.quaternion.copy(qInv).multiply(qTurn).multiply(qc);
+		}
+	};
 
 	// ── Layer turns: attach a layer to a pivot, turn 90°, hand pieces back snapped to the grid ──
 	const pivot = new Object3D();
@@ -245,11 +391,16 @@ export function createHeroScene(
 	};
 	const step = (dt: number) => {
 		if (turn) {
-			turn.t += dt / turn.dur;
+			// Finish a half-done turn quickly once the cube starts coming apart.
+			turn.t += (dt / turn.dur) * (exploding() ? 3 : 1);
 			if (turn.t >= 1) {
 				endTurn();
 				pause = plan.length ? 0.08 + Math.random() * 0.14 : scrambled ? 1.0 : 2.2;
 			} else pivot.rotation[AXES[turn.a]] = ((turn.d * Math.PI) / 2) * ease(turn.t);
+			return;
+		}
+		if (exploding()) {
+			pause = Math.max(pause, 0.6);
 			return;
 		}
 		pause -= dt;
@@ -340,6 +491,7 @@ export function createHeroScene(
 	comet.renderOrder = 5;
 	ring.add(comet);
 
+	let baseZ = CAMERA_Z;
 	const fit = () => {
 		const w = canvas.clientWidth;
 		const h = canvas.clientHeight;
@@ -347,7 +499,8 @@ export function createHeroScene(
 		renderer.setSize(w, h, false);
 		camera.aspect = w / h;
 		// Pull the camera back on tall/narrow canvases so the ring never clips.
-		camera.position.z = CAMERA_Z / Math.max(0.55, Math.min(1, w / h));
+		baseZ = CAMERA_Z / Math.max(0.55, Math.min(1, w / h));
+		camera.position.z = baseZ;
 		camera.updateProjectionMatrix();
 	};
 	fit();
@@ -369,6 +522,7 @@ export function createHeroScene(
 		spin = 0.62,
 		raf = 0;
 	let visible = true;
+	let compiled = false;
 	const onMove = (e: PointerEvent) => {
 		tx = e.clientX / (window.innerWidth || 1) - 0.5;
 		ty = e.clientY / (window.innerHeight || 1) - 0.5;
@@ -403,6 +557,14 @@ export function createHeroScene(
 		ry += (tx * 0.5 - ry) * 0.04;
 		group.rotation.y = spin + ry;
 		group.rotation.x = 0.5 + rx;
+		if (enhanced && envMix < 1) {
+			envMix = Math.min(1, envMix + dt / 0.9);
+			lightFor(palette.dark);
+		}
+		applyExplosion();
+		// Ease the camera back as the pieces spread so the exploded view stays in frame.
+		const ex = explosion.overall.t;
+		camera.position.z = baseZ * (1 + 0.42 * ex * ex * (3 - 2 * ex));
 		placeComet(t);
 		renderer.render(scene, camera);
 		if (publish) publishComet();
@@ -416,14 +578,14 @@ export function createHeroScene(
 
 	const ro = new ResizeObserver(() => {
 		fit();
-		if (reduce) still();
+		if (reduce && compiled) still();
 	});
 	ro.observe(canvas);
 
 	// Pause the loop while the hero is off screen.
 	const io = new IntersectionObserver(([entry]) => {
 		visible = entry.isIntersecting;
-		if (visible && !reduce && !raf) {
+		if (visible && compiled && !reduce && !raf) {
 			clock.getDelta();
 			raf = requestAnimationFrame(frame);
 		}
@@ -442,20 +604,75 @@ export function createHeroScene(
 		(sm.uniforms.uCol.value as Color).set(palette.accent);
 		// Draw now so the theme-switch snapshot already has the new colours. Reduced motion
 		// redraws its still frame; otherwise the current pose (and any half-done turn) is kept.
+		if (!compiled) return;
 		if (reduce) still();
 		else renderer.render(scene, camera);
 	};
 	const mo = new MutationObserver(recolor);
 	mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
-	if (reduce) still();
-	else {
-		window.addEventListener('pointermove', onMove, { passive: true });
-		raf = requestAnimationFrame(frame);
-	}
+	// Compile every shader off the main thread where the browser allows it
+	// (KHR_parallel_shader_compile), so the first frame doesn't stall the page or the intro loader.
+	let disposed = false;
+	// Shadows: compile the shadowed variants in parallel while frames keep using the compiled
+	// shadow-free programs (the program cache is keyed on shadowMap.enabled), then switch over.
+	let enhancing = false;
+	let enhanced = false;
+	let enhanceTimer = 0;
+	// After load: bake the studio environment and compile the reflective + shadowed variants in
+	// parallel while frames keep using the compiled plain programs (the program cache is keyed on
+	// environment and shadow state), then switch over and fade the reflections in.
+	const enhance = () => {
+		if (disposed || enhancing) return;
+		enhancing = true;
+		const pmrem = new PMREMGenerator(renderer);
+		envMap = pmrem.fromEquirectangular(studioTex).texture;
+		pmrem.dispose();
+		studioTex.dispose();
+		scene.environment = envMap;
+		renderer.shadowMap.enabled = true;
+		for (const m of [bodyMat, ...stMats]) m.needsUpdate = true;
+		const pending = renderer.compileAsync(scene, camera);
+		scene.environment = null;
+		renderer.shadowMap.enabled = false;
+		pending
+			.catch(() => {})
+			.then(() => {
+				if (disposed) return;
+				scene.environment = envMap;
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.needsUpdate = true;
+				enhanced = true;
+				if (reduce) {
+					envMix = 1;
+					lightFor(palette.dark);
+					still();
+				}
+			});
+	};
+	const ready = renderer
+		.compileAsync(scene, camera)
+		.catch(() => {})
+		.then(() => {
+			if (disposed) return;
+			compiled = true;
+			const idle = () =>
+				'requestIdleCallback' in window
+					? window.requestIdleCallback(enhance, { timeout: 3000 })
+					: enhance();
+			enhanceTimer = window.setTimeout(idle, 2500);
+			if (reduce) still();
+			else {
+				window.addEventListener('pointermove', onMove, { passive: true });
+				clock.getDelta();
+				if (visible) raf = requestAnimationFrame(frame);
+			}
+		});
 
 	return {
 		dispose() {
+			disposed = true;
+			clearTimeout(enhanceTimer);
 			cancelAnimationFrame(raf);
 			window.removeEventListener('pointermove', onMove);
 			ro.disconnect();
@@ -469,8 +686,12 @@ export function createHeroScene(
 			rm.dispose();
 			sg.dispose();
 			sm.dispose();
+			envMap?.dispose();
+			studioTex.dispose();
 			renderer.dispose();
 			if (publish) cometPos.ready = false;
-		}
+		},
+		explosion,
+		ready
 	};
 }

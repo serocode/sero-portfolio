@@ -7,14 +7,14 @@ role, developer by practice. Built with SvelteKit, fully prerendered, in light a
 
 ## Sections
 
-|                                                                                                       |                                                                                |
-| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| ![About](docs/screenshots/about.jpg)                                                                  | ![Approach](docs/screenshots/approach.jpg)                                     |
-| **About** — a holographic photo card that tilts and flips to show credentials.                        | **Approach** — four threads from a winding path, as keyboard-accessible tabs.  |
-| ![Projects](docs/screenshots/projects.jpg)                                                            | ![Skills](docs/screenshots/skills.jpg)                                         |
-| **Projects** — a sticky card deck; each card has screenshots, phone views or an architecture diagram. | **Skills** — a tools × projects matrix; pick a project to see its whole stack. |
-| ![Contact](docs/screenshots/contact.jpg)                                                              | ![Hero, dark theme](docs/screenshots/hero-dark.jpg)                            |
-| **Contact** — the one inverted panel on the page.                                                     | **Dark theme** — follows the OS, remembers the visitor's choice.               |
+|                                                                                                                                                                                        |                                                                                |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| ![About](docs/screenshots/about.jpg)                                                                                                                                                   | ![Approach](docs/screenshots/approach.jpg)                                     |
+| **About** — a holographic photo card that tilts and flips to show credentials.                                                                                                         | **Approach** — four threads from a winding path, as keyboard-accessible tabs.  |
+| ![Projects](docs/screenshots/projects.jpg)                                                                                                                                             | ![Skills](docs/screenshots/skills.jpg)                                         |
+| **Projects** — a scroll-driven 3D helix of project cards (drag to spin, open any one for screenshots, phone views or an architecture diagram); a sticky card deck with reduced motion. | **Skills** — a tools × projects matrix; pick a project to see its whole stack. |
+| ![Contact](docs/screenshots/contact.jpg)                                                                                                                                               | ![Hero, dark theme](docs/screenshots/hero-dark.jpg)                            |
+| **Contact** — the one inverted panel on the page.                                                                                                                                      | **Dark theme** — follows the OS, remembers the visitor's choice.               |
 
 ### Phones
 
@@ -39,7 +39,8 @@ role, developer by practice. Built with SvelteKit, fully prerendered, in light a
   and without JavaScript), skeletons for the 3D hero and every screenshot while they load, and quiet
   fallbacks when an image or the 3D scene fails. Image boxes are reserved, so nothing shifts.
 - **Touch-friendly:** swipe through project screenshots, drag or tilt the phone to tilt the photo
-  card, and a sticky project deck that works on phones too.
+  card, drag the projects helix to spin it (a sticky deck replaces it with reduced motion or on
+  low-end devices).
 - **Accessible:** semantic landmarks, one `h1`, visible focus, 44px touch targets, keyboard support
   for every control, `prefers-reduced-motion` respected throughout, and axe checks in both themes.
 
