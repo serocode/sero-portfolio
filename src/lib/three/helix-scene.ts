@@ -1,6 +1,6 @@
 /**
- * Projects helix: every project is a curved card on a vertical helix around a central axis, two
- * dotted rails running along it like the edges of a film strip. Rendering only — the position
+ * Projects helix: every project is a curved card on a vertical helix around a central axis.
+ * Rendering only — the position
  * along the helix (a float project index), pointer parallax and layout come from outside
  * (`$lib/motion/helix-motion`), which calls `frame()` from its ticker.
  *
@@ -9,20 +9,21 @@
  *   textures. They redraw when screenshots arrive and when the theme changes.
  * - The focused card (|i − pos| → 0) is pushed out toward the camera, scaled up and fully opaque;
  *   the rest recede with scale, depth and opacity.
+ * - The cards assemble once when the stage first comes into view (`intro()`), the focused card
+ *   casts a soft shadow onto the strip, and a light sheen sweeps across each card as it settles.
  * - Text that matters is not in WebGL: the focused project's details live in the DOM next to the
  *   canvas (Projects.svelte), and the canvas is aria-hidden.
  *
  * Theme-aware through CSS variables (surface, line, ink, muted, accent-700, mist, chip, inverse…,
- * --scene-ring); watches <html data-theme> like the hero scene.
+ * --shadow-rgb); watches <html data-theme> like the hero scene.
  *
  * Usage (client only, dynamic import): const s = createHelixScene(canvas, projects); s.dispose().
  */
 
 import {
 	BackSide,
-	BufferAttribute,
-	BufferGeometry,
 	CanvasTexture,
+	ClampToEdgeWrapping,
 	Color,
 	FrontSide,
 	Group,
@@ -30,8 +31,6 @@ import {
 	MeshBasicMaterial,
 	PerspectiveCamera,
 	PlaneGeometry,
-	Points,
-	PointsMaterial,
 	Raycaster,
 	Scene,
 	SRGBColorSpace,
@@ -71,6 +70,8 @@ export type HelixScene = {
 	/** Index of the card under a client point, or -1. */
 	pick: (clientX: number, clientY: number) => number;
 	setHover: (i: number) => void;
+	/** Play the assemble-in once (cards stay hidden until it's called). */
+	intro: () => void;
 	dispose: () => void;
 };
 
@@ -86,7 +87,7 @@ type Palette = Record<
 	| 'chip'
 	| 'inverse'
 	| 'onInverse'
-	| 'ring',
+	| 'shadow',
 	string
 > & { dark: boolean };
 
@@ -107,7 +108,7 @@ function readPalette(): Palette {
 		chip: v('--color-chip', '#f3f4f6'),
 		inverse: v('--color-inverse', '#0d1117'),
 		onInverse: v('--color-on-inverse', '#ffffff'),
-		ring: v('--scene-ring', '#9aa3ad')
+		shadow: `rgb(${(v('--shadow-rgb', '13 17 23') || '13 17 23').split(/[\s,]+/).join(',')})`
 	};
 }
 
@@ -313,8 +314,12 @@ function drawCard(
 }
 
 /** A plane bent onto the helix cylinder so each card follows the curve of the strip. */
-function curvedCard(radius: number): PlaneGeometry {
-	const g = new PlaneGeometry(HELIX.cardW, HELIX.cardH, 32, 1);
+function curvedCard(
+	radius: number,
+	w: number = HELIX.cardW,
+	h: number = HELIX.cardH
+): PlaneGeometry {
+	const g = new PlaneGeometry(w, h, 32, 1);
 	const p = g.attributes.position;
 	for (let i = 0; i < p.count; i++) {
 		const x = p.getX(i);
@@ -326,6 +331,51 @@ function curvedCard(radius: number): PlaneGeometry {
 }
 
 const smooth = (x: number) => x * x * (3 - 2 * x);
+const easeOut = (x: number) => 1 - (1 - x) ** 3;
+const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
+
+/** A blurred rounded rectangle in white on transparent, tinted by the material colour. */
+function shadowTexture(): CanvasTexture {
+	const c = document.createElement('canvas');
+	const w = 256;
+	const h = Math.round((w * HELIX.cardH * 1.3) / (HELIX.cardW * 1.16));
+	c.width = w;
+	c.height = h;
+	const x = c.getContext('2d');
+	if (x) {
+		// Draw the shape off-canvas and keep only its blurred shadow.
+		x.shadowColor = '#fff';
+		x.shadowBlur = 22;
+		x.shadowOffsetX = 4000;
+		rr(x, 28 - 4000, 30, w - 56, h - 60, 18);
+		x.fillStyle = '#fff';
+		x.fill();
+	}
+	const t = new CanvasTexture(c);
+	t.colorSpace = SRGBColorSpace;
+	return t;
+}
+
+/** A soft diagonal light stripe; sliding the texture offset sweeps it across a card. */
+function sheenTexture(): CanvasTexture {
+	const c = document.createElement('canvas');
+	c.width = 512;
+	c.height = 256;
+	const x = c.getContext('2d');
+	if (x) {
+		const g = x.createLinearGradient(0, 0, 512, 0);
+		g.addColorStop(0.38, 'rgba(255,255,255,0)');
+		g.addColorStop(0.5, 'rgba(255,255,255,0.55)');
+		g.addColorStop(0.62, 'rgba(255,255,255,0)');
+		x.setTransform(1, 0, -0.45, 1, 58, 0); // lean the stripe
+		x.fillStyle = g;
+		x.fillRect(-200, 0, 912, 256);
+	}
+	const t = new CanvasTexture(c);
+	t.colorSpace = SRGBColorSpace;
+	t.wrapS = ClampToEdgeWrapping;
+	return t;
+}
 
 export function createHelixScene(canvas: HTMLCanvasElement, projects: Project[]): HelixScene {
 	const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -338,7 +388,7 @@ export function createHelixScene(canvas: HTMLCanvasElement, projects: Project[])
 	const helix = new Group();
 	scene.add(helix);
 
-	const { radius: R, step, rise, cardH } = HELIX;
+	const { radius: R, step, rise } = HELIX;
 	const total = projects.length;
 
 	// ── Images (shared by src) ───────────────────────────────────────────────────────
@@ -395,8 +445,15 @@ export function createHelixScene(canvas: HTMLCanvasElement, projects: Project[])
 		back: Mesh<PlaneGeometry, MeshBasicMaterial>;
 		ctx: CanvasRenderingContext2D | null;
 		tex: CanvasTexture;
+		shadow: Mesh<PlaneGeometry, MeshBasicMaterial>;
+		sheen: Mesh<PlaneGeometry, MeshBasicMaterial>;
 		theta: number;
+		/** Sweep progress: < 0 idle, 0…1 running. */
+		sweep: number;
 	};
+	const shadowGeo = curvedCard(R, HELIX.cardW * 1.16, HELIX.cardH * 1.3);
+	const shadowTex = shadowTexture();
+	const sheenTex = sheenTexture();
 	const cards: Card[] = projects.map((project, i) => {
 		const c = document.createElement('canvas');
 		c.width = TW;
@@ -419,15 +476,56 @@ export function createHelixScene(canvas: HTMLCanvasElement, projects: Project[])
 				side: BackSide
 			})
 		);
+		// Soft shadow just behind the card (same curvature), dropped a little.
+		const shadow = new Mesh(
+			shadowGeo,
+			new MeshBasicMaterial({
+				map: shadowTex,
+				color: new Color(pal.shadow),
+				transparent: true,
+				opacity: 0,
+				depthWrite: false,
+				side: FrontSide
+			})
+		);
+		shadow.position.set(0, -0.14, -0.22);
+		shadow.renderOrder = -1;
+		// Sheen: a transparent copy of the face that a light stripe slides across.
+		const sheenMap = sheenTex.clone();
+		sheenMap.needsUpdate = true;
+		const sheen = new Mesh(
+			geo,
+			new MeshBasicMaterial({
+				map: sheenMap,
+				alphaMap: backTex,
+				transparent: true,
+				opacity: 0,
+				depthWrite: false,
+				side: FrontSide
+			})
+		);
+		sheen.position.z = 0.004;
+		sheen.renderOrder = 1;
+		sheen.visible = false;
 		const group = new Group();
-		group.add(front, back);
+		group.add(shadow, front, back, sheen);
 		const theta = i * step;
 		group.rotation.y = theta;
 		helix.add(group);
 		// Ask for the images this card needs so it redraws when they land.
 		const view = project.views[0];
 		if (view.type !== 'diagram') for (const s of view.shots.slice(0, 3)) img(s.src, i);
-		return { group, front, back, ctx: c.getContext('2d'), tex, theta };
+		return {
+			group,
+			front,
+			back,
+			ctx: c.getContext('2d'),
+			tex,
+			shadow,
+			sheen,
+			theta,
+			sweep: -1
+		};
 	});
 
 	let needsRender = true;
@@ -446,28 +544,6 @@ export function createHelixScene(canvas: HTMLCanvasElement, projects: Project[])
 	// Fonts may still be swapping in; draw once more when they're ready.
 	document.fonts?.ready.then(() => redrawAll());
 
-	// ── Rails: two dotted lines along the strip's edges ──────────────────────────────
-	const railPts: number[] = [];
-	const edge = cardH / 2 + 0.2;
-	for (let s = -1.4; s <= total + 0.4; s += 0.014) {
-		const a = s * step;
-		const x = Math.sin(a) * R;
-		const z = Math.cos(a) * R;
-		railPts.push(x, -s * rise + edge, z, x, -s * rise - edge, z);
-	}
-	const railGeo = new BufferGeometry();
-	railGeo.setAttribute('position', new BufferAttribute(new Float32Array(railPts), 3));
-	const railMat = new PointsMaterial({
-		color: new Color(pal.ring),
-		size: 0.028,
-		sizeAttenuation: true,
-		transparent: true,
-		opacity: 0.75,
-		depthWrite: false
-	});
-	const rails = new Points(railGeo, railMat);
-	helix.add(rails);
-
 	// ── Camera + layout ──────────────────────────────────────────────────────────────
 	let W = 1;
 	let H = 1;
@@ -481,6 +557,10 @@ export function createHelixScene(canvas: HTMLCanvasElement, projects: Project[])
 	let tilt = 0;
 	let hover = -1;
 	const hoverAmt = projects.map(() => 0);
+	// Assemble-in: < 0 waiting (cards hidden), then seconds since it started.
+	let introT = -1;
+	const INTRO = 1.6;
+	let settled = -1;
 	const look = new Vector3();
 
 	const targetDist = () => {
@@ -509,8 +589,10 @@ export function createHelixScene(canvas: HTMLCanvasElement, projects: Project[])
 
 	const recolor = () => {
 		pal = readPalette();
-		railMat.color.set(pal.ring);
-		for (const c of cards) c.back.material.color.set(pal.lineStrong);
+		for (const c of cards) {
+			c.back.material.color.set(pal.lineStrong);
+			c.shadow.material.color.set(pal.shadow);
+		}
 		redrawAll();
 		render();
 	};
@@ -548,6 +630,24 @@ export function createHelixScene(canvas: HTMLCanvasElement, projects: Project[])
 			hoverAmt[i] += (h - before) * (1 - Math.exp(-dt * 10));
 			if (Math.abs(hoverAmt[i] - before) > 1e-4) moving = true;
 		}
+		if (introT >= 0 && introT < INTRO) {
+			introT = Math.min(INTRO, introT + dt);
+			moving = true;
+		}
+		// A card that has just come to rest in focus gets one sheen sweep.
+		const near = Math.round(pos);
+		if (Math.abs(pos - near) < 0.015 && introT >= INTRO * 0.7) {
+			if (near !== settled && near >= 0 && near < total) {
+				settled = near;
+				cards[near].sweep = 0;
+			}
+		} else if (Math.abs(pos - settled) > 0.5) settled = -1;
+		for (const c of cards) {
+			if (c.sweep < 0) continue;
+			c.sweep += dt / 0.95;
+			if (c.sweep >= 1) c.sweep = -1;
+			moving = true;
+		}
 		if (!moving && !needsRender) return;
 		lastPos = pos;
 
@@ -567,12 +667,24 @@ export function createHelixScene(canvas: HTMLCanvasElement, projects: Project[])
 			const ad = Math.abs(i - pos);
 			const a = smooth(1 - Math.min(ad, 1));
 			const r = R + HELIX.push * a;
-			c.group.position.set(Math.sin(c.theta) * r, -i * rise, Math.cos(c.theta) * r);
-			c.group.scale.setScalar(0.82 + 0.18 * a + 0.025 * hoverAmt[i]);
-			const op = ad < 1 ? 1 - 0.3 * smooth(ad) : Math.max(0, 0.7 - 0.28 * (ad - 1));
+			// Intro: nearest cards first, each rising and turning into place.
+			const e = introT < 0 ? 0 : easeOut(clamp01((introT - Math.min(ad, 4) * 0.11) / 0.95));
+			const lift = (1 - e) * 1.5;
+			c.group.position.set(Math.sin(c.theta) * r, -i * rise - lift, Math.cos(c.theta) * r);
+			c.group.rotation.y = c.theta + (1 - e) * 0.55;
+			c.group.scale.setScalar((0.82 + 0.18 * a + 0.025 * hoverAmt[i]) * (0.9 + 0.1 * e));
+			const op = (ad < 1 ? 1 - 0.3 * smooth(ad) : Math.max(0, 0.7 - 0.28 * (ad - 1))) * e;
 			c.group.visible = op > 0.02;
 			c.front.material.opacity = op;
 			c.back.material.opacity = op * 0.28;
+			c.shadow.material.opacity = (pal.dark ? 0.5 : 0.22) * a * e * (1 + 0.4 * hoverAmt[i]);
+			c.shadow.visible = c.shadow.material.opacity > 0.005;
+			if (c.sweep >= 0) {
+				const t = smooth(c.sweep);
+				c.sheen.visible = true;
+				c.sheen.material.map?.offset.set(0.75 - 1.5 * t, 0);
+				c.sheen.material.opacity = op * (pal.dark ? 0.22 : 0.5) * Math.sin(Math.PI * c.sweep);
+			} else c.sheen.visible = false;
 			c.front.material.color.setScalar(1 - 0.1 * Math.min(1, ad));
 			// Nearest cards draw last so the transparent sort never lets a far card cover them.
 			c.group.renderOrder = -Math.round(ad * 10);
@@ -610,6 +722,10 @@ export function createHelixScene(canvas: HTMLCanvasElement, projects: Project[])
 		setHover(i) {
 			hover = i;
 		},
+		intro() {
+			if (introT < 0) introT = 0;
+			needsRender = true;
+		},
 		dispose() {
 			disposed = true;
 			ro.disconnect();
@@ -623,10 +739,16 @@ export function createHelixScene(canvas: HTMLCanvasElement, projects: Project[])
 				c.front.material.dispose();
 				c.back.material.dispose();
 			}
+			for (const c of cards) {
+				c.shadow.material.dispose();
+				c.sheen.material.map?.dispose();
+				c.sheen.material.dispose();
+			}
 			backTex.dispose();
+			shadowTex.dispose();
+			sheenTex.dispose();
 			geo.dispose();
-			railGeo.dispose();
-			railMat.dispose();
+			shadowGeo.dispose();
 			renderer.dispose();
 		}
 	};

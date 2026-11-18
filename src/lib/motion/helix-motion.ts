@@ -45,7 +45,8 @@ export function createHelixMotion({
 	canvas,
 	count,
 	onFocus,
-	onOpen
+	onOpen,
+	onPosition
 }: {
 	gsap: Gsap;
 	ScrollTrigger: ScrollTriggerT;
@@ -57,6 +58,8 @@ export function createHelixMotion({
 	count: number;
 	onFocus: (i: number) => void;
 	onOpen: (i: number) => void;
+	/** Every frame the position changes (float index), for progress UI. */
+	onPosition?: (pos: number) => void;
 }): HelixMotion {
 	gsap.registerPlugin(ScrollTrigger, Observer);
 	const last = count - 1;
@@ -94,6 +97,7 @@ export function createHelixMotion({
 	current = scrollPos;
 	focus = Math.round(current);
 	onFocus(focus);
+	onPosition?.(current);
 
 	const scrollTopFor = (i: number) => st.start + (clamp(i, 0, last) / last) * (st.end - st.start);
 
@@ -121,6 +125,7 @@ export function createHelixMotion({
 		if (Math.abs(target - current) < 1e-4) current = target;
 		speed = dt > 0 ? (current - prev) / dt : 0;
 		scene.frame(current, speed, dt);
+		if (current !== prev) onPosition?.(current);
 		const f = clamp(Math.round(current), 0, last);
 		if (f !== focus) {
 			focus = f;
@@ -136,6 +141,16 @@ export function createHelixMotion({
 	};
 	const io = new IntersectionObserver(([e]) => setTicking(!!e?.isIntersecting));
 	io.observe(stage);
+	// The cards assemble once, when enough of the stage is on screen to see it happen.
+	const introIo = new IntersectionObserver(
+		([e]) => {
+			if (!e || e.intersectionRatio < 0.35) return;
+			introIo.disconnect();
+			scene.intro();
+		},
+		{ threshold: [0, 0.35] }
+	);
+	introIo.observe(stage);
 
 	// ── Drag / touch on the canvas ────────────────────────────────────────────────────
 	const pxPerCard = () => Math.max(220, canvas.clientWidth * 0.42);
@@ -222,6 +237,7 @@ export function createHelixMotion({
 		kill() {
 			setTicking(false);
 			io.disconnect();
+			introIo.disconnect();
 			st.kill();
 			dragObs.kill();
 			clearTimeout(wheelIdle);

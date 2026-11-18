@@ -86,7 +86,7 @@ rather than redesigning.
    has its own `loading → ready | failed` skeleton. Text is prerendered, so it gets no skeleton.
 6. **Responsive:** 1440 → 390px with no horizontal scroll. The one breakpoint that changes layout is
    820px (nav → menu button, the helix panel stacks and the fallback deck keeps its sticky stack with a tighter stair-step, Approach tabs
-   become a wrapping grid, skills columns become 2-letter codes). About alone adds a 700px step
+   become a wrapping grid, skills group labels move above two-column tool tiles). About alone adds a 700px step
    (card beside text on tablets, stacked on phones).
 
 ## Layout

@@ -30,6 +30,7 @@
 	let stage = $state<HTMLElement>();
 	let canvas = $state<HTMLCanvasElement>();
 	let panel = $state<HTMLElement>();
+	let ticks = $state<HTMLElement>();
 	let detail = $state<HTMLElement>();
 	let dialog = $state<HTMLDialogElement>();
 	let openIdx = $state<number | null>(null);
@@ -130,7 +131,8 @@
 								canvas,
 								count: total,
 								onFocus: (i) => (focus = i),
-								onOpen: openDetail
+								onOpen: openDetail,
+								onPosition: (p) => ticks?.style.setProperty('--hx-pos', p.toFixed(4))
 							});
 							scene3d = 'ready';
 						} catch {
@@ -189,6 +191,7 @@
 				<span
 					class="pointer-events-none absolute inset-x-0 top-0 bottom-[40%] grid place-items-center transition-opacity duration-500 ease-[ease] data-[state=ready]:opacity-0"
 					data-state={scene3d}
+					data-draft="Helix"
 					aria-hidden="true"
 					><span
 						class={[
@@ -205,7 +208,6 @@
 						scene3d === 'ready' ? 'opacity-100' : 'opacity-0'
 					]}
 					aria-hidden="true"
-					data-draft="Helix"
 				></canvas>
 
 				<div
@@ -218,7 +220,12 @@
 							<span class="text-[15px] font-medium text-accent-700">{pad2(focus + 1)}</span>
 							/ {pad2(total)}
 						</p>
-						<ol class="flex min-w-0 flex-1 items-center" aria-label={copy.listLabel}>
+						<ol
+							class="flex min-w-0 flex-1 items-center"
+							aria-label={copy.listLabel}
+							bind:this={ticks}
+							style="--hx-pos: 0"
+						>
 							{#each projects as p, i (p.id)}
 								<li class="min-w-0 flex-1">
 									<button
@@ -228,9 +235,15 @@
 										aria-current={i === focus ? 'true' : undefined}
 										onclick={() => motion?.go(i)}
 									>
+										<!-- Fills with the position, so the strip shows progress between projects too. -->
 										<span
-											class="h-0.5 w-full rounded-full bg-line-strong transition-[background-color,height] duration-300 ease-smooth group-hover:bg-faint group-aria-[current=true]:h-1 group-aria-[current=true]:bg-accent"
-										></span>
+											class="relative h-0.5 w-full overflow-hidden rounded-full bg-line-strong transition-[background-color,height] duration-300 ease-smooth group-hover:bg-faint group-aria-[current=true]:h-1"
+										>
+											<span
+												class="absolute inset-0 origin-left rounded-full bg-accent/45 transition-colors duration-300 group-aria-[current=true]:bg-accent"
+												style:scale="clamp(0, calc(var(--hx-pos) - {i} + 1), 1) 1"
+											></span>
+										</span>
 									</button>
 								</li>
 							{/each}

@@ -690,6 +690,111 @@ export const projects: Project[] = [
 				]
 			}
 		]
+	},
+	{
+		id: 'enlock',
+		title: 'Enlock',
+		kind: 'Secrets manager · Web app, CLI & SDK',
+		badges: [
+			{
+				label: 'SDK & CLI on npm',
+				tone: 'live'
+			},
+			{
+				label: 'Deploying soon',
+				tone: 'neutral'
+			},
+			{
+				label: 'Private repo',
+				tone: 'private'
+			}
+		],
+		description:
+			'A place for a team’s environment variables and API keys that never leaves them in plain text. One store behind a web dashboard, an HTTP API, a CLI and a TypeScript SDK — and the CLI hands secrets straight to your process instead of writing a .env file.',
+		highlights: [
+			'Envelope encryption — every secret gets its own AES-256 key, sealed by a master key in OpenBao or a local key file',
+			'Organizations, projects and roles, with every read and change written to an activity log',
+			'Version history for each secret, with one-click restore',
+			'The CLI’s run command injects secrets into a child process; push and pull sync a .env file'
+		],
+		stack: [
+			'TypeScript',
+			'Hono',
+			'React · Vite',
+			'Better Auth',
+			'PostgreSQL',
+			'Drizzle ORM',
+			'OpenBao',
+			'Redis',
+			'Tailwind CSS',
+			'Vitest',
+			'Turborepo'
+		],
+		links: [
+			{
+				label: 'CLI on npm',
+				href: 'https://www.npmjs.com/package/@enlock/cli',
+				variant: 'primary'
+			},
+			{
+				label: 'SDK on npm',
+				href: 'https://www.npmjs.com/package/@enlock/sdk',
+				variant: 'ghost'
+			}
+		],
+		views: [
+			{
+				label: 'Dashboard',
+				type: 'browser',
+				addressBar: 'Enlock',
+				background: '#fcfcfc',
+				shots: [
+					{
+						src: '/images/projects/enlock/landing.webp',
+						width: 1451,
+						height: 840,
+						label: 'Home',
+						caption: 'Home — secrets your team can share without spreading them'
+					},
+					{
+						src: '/images/projects/enlock/secrets.webp',
+						width: 1451,
+						height: 840,
+						label: 'Secrets',
+						caption: 'A project’s secrets — masked until you reveal one'
+					},
+					{
+						src: '/images/projects/enlock/secret-history.webp',
+						width: 1451,
+						height: 840,
+						label: 'History',
+						caption: 'Version history for a secret, with restore'
+					},
+					{
+						src: '/images/projects/enlock/use-in-code.webp',
+						width: 1451,
+						height: 840,
+						label: 'Use in code',
+						caption: 'Use in code — install the CLI, sign in, run your app with the secrets'
+					},
+					{
+						src: '/images/projects/enlock/activity.webp',
+						width: 1451,
+						height: 840,
+						label: 'Activity',
+						caption:
+							'Activity — every read and change in the organization, filterable and exportable'
+					},
+					{
+						src: '/images/projects/enlock/docs.webp',
+						width: 1451,
+						height: 840,
+						label: 'Docs',
+						caption: 'Docs for the CLI, the SDK and the dashboard'
+					}
+				]
+			}
+		]
 	}
 ];
 

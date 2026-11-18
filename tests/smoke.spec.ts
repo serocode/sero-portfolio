@@ -99,14 +99,14 @@ test('the card back fits at 240–300px card widths', async ({ page }) => {
 test('skills filter changes the readout', async ({ page }) => {
 	await page.goto('/');
 	const readout = page.locator('#skills [aria-live="polite"]');
-	await expect(readout).toContainText('26 tools across 7 projects.');
+	await expect(readout).toContainText('26 tools across 8 projects.');
 	const medicore = page.locator('#skills').getByRole('button', { name: 'MediCore' });
 	await medicore.focus();
 	await page.keyboard.press('Enter');
 	await expect(medicore).toHaveAttribute('aria-pressed', 'true');
 	await expect(readout).toContainText('MediCore uses 16 of these 26 tools.');
 	await page.keyboard.press('Enter');
-	await expect(readout).toContainText('26 tools across 7 projects.');
+	await expect(readout).toContainText('26 tools across 8 projects.');
 });
 
 test('Approach tabs move with arrow keys', async ({ page }) => {
@@ -562,18 +562,18 @@ test('projects helix: scroll turns it, buttons and ticks move focus, Explore ope
 	await expect(title).toHaveText('TockUp');
 	await page.getByRole('button', { name: 'Next project' }).click();
 	await expect(title).toHaveText('Kitchen Counter');
-	await page.getByRole('button', { name: 'Show MediCore' }).click();
-	await expect(title).toHaveText('MediCore');
-	await expect(page.getByRole('button', { name: 'Show MediCore' })).toHaveAttribute(
+	await page.getByRole('button', { name: 'Show Enlock' }).click();
+	await expect(title).toHaveText('Enlock');
+	await expect(page.getByRole('button', { name: 'Show Enlock' })).toHaveAttribute(
 		'aria-current',
 		'true'
 	);
 	await expect(page.getByRole('button', { name: 'Next project' })).toBeDisabled();
-	const explore = page.getByRole('button', { name: 'Explore MediCore' });
+	const explore = page.getByRole('button', { name: 'Explore Enlock' });
 	await explore.click();
-	const dialog = page.getByRole('dialog', { name: 'MediCore' });
+	const dialog = page.getByRole('dialog', { name: 'Enlock' });
 	await expect(dialog).toBeVisible();
-	await expect(dialog.getByRole('link', { name: /Source/ })).toBeVisible();
+	await expect(dialog.getByRole('link', { name: /CLI on npm/ })).toBeVisible();
 	expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe('hidden');
 	await page.keyboard.press('Escape');
 	await expect(dialog).toBeHidden();

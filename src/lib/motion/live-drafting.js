@@ -13,6 +13,7 @@ function el(tag, attrs, parent) {
 	if (parent) parent.appendChild(n);
 	return n;
 }
+const ZERO = { x: 0, y: 0 };
 const clamp = (v, a, b) => (v < a ? a : Math.min(v, b));
 const f1 = (v) => Math.round(v * 10) / 10;
 const CURSOR = 'M0 0 L0 17.5 L4.6 13.1 L7.6 19.8 L10.4 18.6 L7.4 12 L13.6 12 Z';
@@ -54,6 +55,7 @@ export function createLiveDrafting(o) {
 	const groups = [],
 		triggers = [],
 		calls = [];
+	let frame = 0;
 	(o.groups || []).forEach((cfg) => {
 		const node = cfg.node || (cfg.id ? document.getElementById(cfg.id) : null);
 		if (!node) return;
@@ -93,6 +95,7 @@ export function createLiveDrafting(o) {
 			targets: targets,
 			cursors: [],
 			queue: [],
+			pinned: false,
 			oy: 0
 		};
 		G.svg = el('svg', { class: 'hx', width: 1, height: 1 });
@@ -155,7 +158,17 @@ export function createLiveDrafting(o) {
 		});
 		const n = clamp(cfg.cursors || 2, 1, Math.min(6, targets.length));
 		for (let i = 0; i < n; i++) {
-			const C = { i: i, x: 0, y: 0, scale: 1, vis: 0, active: false, hist: [], tilt: 0 };
+			const C = {
+				i: i,
+				x: 0,
+				y: 0,
+				scale: 1,
+				vis: 0,
+				active: false,
+				hist: [],
+				tilt: 0,
+				anchor: null
+			};
 			C.trail = el(
 				'polyline',
 				{
@@ -284,7 +297,51 @@ export function createLiveDrafting(o) {
 		return ty;
 	}
 
+	// Targets inside a sticky/fixed container (the pinned hero, the helix stage) keep moving while
+	// the page scrolls, and their content can reflow (the helix panel swaps projects). Boxes are
+	// measured once in page coordinates, so each pinned target remembers where its element was;
+	// every frame its box, and the cursor working on it, shift by how far the element has moved.
+	function pinOf(n, root) {
+		let p = n.parentElement;
+		while (p && p !== document.body) {
+			const pos = getComputedStyle(p).position;
+			if (pos === 'sticky' || pos === 'fixed') return p;
+			if (p === root) break;
+			p = p.parentElement;
+		}
+		return null;
+	}
+	function drift(T) {
+		if (!T?.pin || !T.r0) return ZERO;
+		if (T.at === frame) return T.off;
+		const r = T.node.getBoundingClientRect();
+		T.off =
+			r.width > 0 || r.height > 0
+				? { x: r.left + window.scrollX - T.r0.x, y: r.top + window.scrollY - T.r0.y }
+				: T.off || ZERO;
+		T.at = frame;
+		return T.off;
+	}
+	function rebase(C, T) {
+		if (C.anchor === T) return;
+		const a = drift(C.anchor),
+			b = drift(T),
+			dx = a.x - b.x,
+			dy = a.y - b.y;
+		C.x += dx;
+		C.y += dy;
+		for (let k = 0; k < C.hist.length; k++) {
+			C.hist[k].x += dx;
+			C.hist[k].y += dy;
+		}
+		C.anchor = T;
+	}
+
 	function measure(G) {
+		// Fold any pin movement into the cursors before the pins are re-recorded.
+		G.cursors.forEach((C) => {
+			if (C.anchor) rebase(C, null);
+		});
 		let sx = window.scrollX,
 			sy = window.scrollY,
 			box = G.node,
@@ -298,6 +355,19 @@ export function createLiveDrafting(o) {
 			} catch (_e) {}
 			W = box.offsetWidth;
 		} else W = document.documentElement.scrollWidth;
+		G.pinned = false;
+		G.targets.forEach((T) => {
+			T.pin = G.local ? null : pinOf(T.node, G.node);
+			T.r0 = null;
+			T.at = -1;
+			T.off = ZERO;
+			if (T.pin) {
+				const r = T.node.getBoundingClientRect();
+				T.r0 = { x: r.left + sx, y: r.top + sy - revealTy(T.node, G.node) };
+				G.pinned = true;
+			}
+			T.g.removeAttribute('transform');
+		});
 		G.targets.forEach((T) => {
 			let n = T.node,
 				x,
@@ -373,39 +443,42 @@ export function createLiveDrafting(o) {
 		});
 	}
 
+	// Each label takes the spot that covers the least: other labels count heavily, other boxes
+	// lightly, and sitting inside its own box (over the content) is a last resort.
 	function placeLabels(G, maxW) {
-		const taken = G.targets.map((T) => T.Bl);
-		const hit = (r, self) => {
-			for (let t = 0; t < taken.length; t++) {
-				const q = taken[t];
-				if (q === self) continue;
-				if (r.x < q.x + q.w && r.x + r.w > q.x && r.y < q.y + q.h && r.y + r.h > q.y) return true;
-			}
-			return false;
-		};
+		const LH = 20;
+		const boxes = G.targets.filter((T) => !T.hidden).map((T) => T.Bl);
+		const labels = [];
+		const overlap = (r, q) =>
+			Math.max(0, Math.min(r.x + r.w, q.x + q.w) - Math.max(r.x, q.x)) *
+			Math.max(0, Math.min(r.y + r.h, q.y + q.h) - Math.max(r.y, q.y));
 		G.targets.forEach((T) => {
 			const B = T.Bl,
 				w = T.labW;
 			let cands = [
 				{ x: B.x + B.w - w, y: B.y - 26 },
+				{ x: B.x, y: B.y - 26 },
 				{ x: B.x + B.w + 10, y: B.y + 2 },
+				{ x: B.x + B.w - w, y: B.y + B.h + 6 },
+				{ x: B.x, y: B.y + B.h + 6 },
 				{ x: B.x - w - 10, y: B.y + 2 },
-				{ x: B.x + B.w - w - 6, y: B.y + 6, inside: true },
-				{ x: B.x, y: B.y + B.h + 6 }
+				{ x: B.x + B.w - w - 6, y: B.y + 6, inside: true }
 			].filter((c) => c.x >= 2 && c.x + w <= maxW - 2);
 			if (!cands.length) cands = [{ x: B.x + 6, y: B.y + 6, inside: true }];
-			let pick = null,
-				inside = null;
-			for (let c = 0; c < cands.length; c++) {
-				if (!hit({ x: cands[c].x, y: cands[c].y, w: w, h: 20 }, B)) {
-					pick = cands[c];
-					break;
+			let pick = cands[0],
+				best = Infinity;
+			cands.forEach((c, k) => {
+				const r = { x: c.x, y: c.y, w: w, h: LH };
+				let s = k * 4 + (c.inside ? w * LH * 3 : 0);
+				for (const q of labels) s += overlap(r, q) * 6;
+				for (const q of boxes) if (q !== B) s += overlap(r, q);
+				if (s < best) {
+					best = s;
+					pick = c;
 				}
-				if (cands[c].inside) inside = cands[c];
-			}
-			pick = pick || inside || cands[0];
+			});
 			T.labPos = pick;
-			taken.push({ x: pick.x, y: pick.y, w: w, h: 20 });
+			labels.push({ x: pick.x, y: pick.y, w: w, h: LH });
 		});
 	}
 
@@ -458,6 +531,7 @@ export function createLiveDrafting(o) {
 			C.x = e.x;
 			C.y = e.y;
 			C.hist = [];
+			C.anchor = T0;
 			C.active = true;
 			calls.push(
 				gsap.delayedCall((k * rand(0.15, 0.4)) / speed, () => {
@@ -502,6 +576,7 @@ export function createLiveDrafting(o) {
 		spawn(G, false);
 		calls.push(
 			gsap.delayedCall(rand(0.05, 0.32) / speed, () => {
+				rebase(C, T);
 				moveTo(C, T.Bl.x, T.Bl.y, () => {
 					draft(G, C, T);
 				});
@@ -681,29 +756,39 @@ export function createLiveDrafting(o) {
 		if (h.length > 16) h.shift();
 		C.tilt += (clamp(vx * 0.9, -12, 12) - C.tilt) * 0.2;
 		C.g.setAttribute('opacity', C.vis.toFixed(3));
-		C.g.setAttribute('transform', `translate(${f1(C.x)} ${f1(C.y)})`);
+		const o = drift(C.anchor);
+		C.g.setAttribute('transform', `translate(${f1(C.x + o.x)} ${f1(C.y + o.y)})`);
 		C.body.setAttribute('transform', `rotate(${f1(C.tilt)}) scale(${C.scale.toFixed(3)})`);
-		const pts = h.map((p) => `${f1(p.x)},${f1(p.y)}`).join(' ');
+		const pts = h.map((p) => `${f1(p.x + o.x)},${f1(p.y + o.y)}`).join(' ');
 		C.trail.setAttribute('points', pts);
 		C.trail.setAttribute('opacity', (0.55 * Math.min(1, sp * 2.2) * C.vis).toFixed(3));
 		const tail = h
 			.slice(-6)
-			.map((p) => `${f1(p.x)},${f1(p.y)}`)
+			.map((p) => `${f1(p.x + o.x)},${f1(p.y + o.y)}`)
 			.join(' ');
 		C.streak.setAttribute('points', tail);
 		C.streak.setAttribute('opacity', (0.45 * sp * C.vis).toFixed(3));
 		for (let d = 0; d < C.dots.length; d++) {
 			const q = h[Math.max(0, h.length - 3 - d * 3)];
-			C.dots[d].setAttribute('cx', f1(q.x));
-			C.dots[d].setAttribute('cy', f1(q.y));
+			C.dots[d].setAttribute('cx', f1(q.x + o.x));
+			C.dots[d].setAttribute('cy', f1(q.y + o.y));
 			C.dots[d].setAttribute('opacity', (sp * (0.6 - d * 0.13) * C.vis).toFixed(3));
 		}
 	}
 
 	const tick = () => {
+		frame++;
 		for (let i = 0; i < groups.length; i++) {
 			const G = groups[i];
 			if (G.state !== 'running' && G.state !== 'waiting') continue;
+			if (G.pinned) {
+				for (let t = 0; t < G.targets.length; t++) {
+					const T = G.targets[t];
+					if (!T.pin) continue;
+					const o = drift(T);
+					T.g.setAttribute('transform', `translate(${f1(o.x)} ${f1(o.y)})`);
+				}
+			}
 			for (let c = 0; c < G.cursors.length; c++) renderCursor(G.cursors[c]);
 		}
 	};
