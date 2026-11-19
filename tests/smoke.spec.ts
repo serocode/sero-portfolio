@@ -4,8 +4,19 @@ import { expect, type Page, test } from '@playwright/test';
 const sections = ['about', 'approach', 'projects', 'skills', 'contact'];
 
 const skipIntro = () => sessionStorage.setItem('intro-seen', '1');
+// The test browser draws WebGL with SwiftShader, which `hardwareWebGL()` (src/lib/three/gpu.ts)
+// treats as no GPU. Report a hardware renderer so the 3D paths run.
+const fakeGpu = () => {
+	for (const C of [WebGLRenderingContext, WebGL2RenderingContext]) {
+		const get = C.prototype.getParameter;
+		C.prototype.getParameter = function (this: WebGLRenderingContext, p: number) {
+			return p === 0x9246 /* UNMASKED_RENDERER_WEBGL */ ? 'Test GPU' : get.call(this, p);
+		};
+	}
+};
 test.beforeEach(async ({ context }) => {
 	await context.addInitScript(skipIntro);
+	await context.addInitScript(fakeGpu);
 });
 
 function trackErrors(page: Page) {
@@ -623,6 +634,24 @@ test('hero cube explodes with scroll through its runway and reassembles on the w
 	await expect(canvas).toHaveAttribute('data-explode', '1.00');
 	await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
 	await expect(canvas).toHaveAttribute('data-explode', '0.00');
+});
+
+test('software-rendered WebGL: still hero skeleton, no runway, no helix', async ({ browser }) => {
+	const context = await browser.newContext();
+	await context.addInitScript(skipIntro);
+	const page = await context.newPage();
+	await page.goto('/');
+	await expect(page.locator('.scene-skel')).toHaveAttribute('data-state', 'failed');
+	await expect(page.locator('html')).not.toHaveAttribute('data-three', /.+/);
+	const { hero, vh } = await page.evaluate(() => ({
+		hero: document.getElementById('hero')?.getBoundingClientRect().height ?? 0,
+		vh: innerHeight
+	}));
+	expect(hero).toBeLessThanOrEqual(vh);
+	await page.locator('#projects').scrollIntoViewIfNeeded();
+	await expect(page.locator('#projects canvas')).toBeHidden();
+	await expect(page.locator('#projects .deck-card').first()).toBeVisible();
+	await context.close();
 });
 
 test('reduced motion: no hero runway, no helix', async ({ browser }) => {

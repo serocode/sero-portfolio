@@ -12,7 +12,8 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 			adapter: adapter(),
-			inlineStyleThreshold: 64 * 1024
+			// Above the whole stylesheet (~87 KB), so it's inlined: no render-blocking CSS request.
+			inlineStyleThreshold: 128 * 1024
 		})
 	]
 });

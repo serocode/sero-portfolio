@@ -54,7 +54,10 @@ rather than redesigning.
 4. **Motion:** everything animated has a `prefers-reduced-motion` path (hero renders one still
    frame; deck becomes a normal stack; no spin; no tilt).
    Scroll-driven 3D is gated by `html[data-three="on"]` (head script in `app.html`: motion
-   allowed, WebGL, not Save-Data, ≥4 cores / ≥4GB) and the `three-on:` variant:
+   allowed, WebGL, not Save-Data, ≥4 cores / ≥4GB) and the `three-on:` variant. After hydration
+   `hardwareWebGL()` (`src/lib/three/gpu.ts`) drops the flag when WebGL is software-rendered
+   (SwiftShader, llvmpipe — incl. Lighthouse lab runs) and the hero keeps its still skeleton.
+   Tests report a GPU renderer (`fakeGpu` in `tests/smoke.spec.ts`) so the 3D paths still run:
    - Hero: the section gets a scroll runway with its content pinned; a scrubbed GSAP timeline
      (`src/lib/motion/cube-explode.ts`) explodes the cube (corners → edges → centres) and
      reassembles it on the way back. Offsets are recomputed from progress every frame on top of

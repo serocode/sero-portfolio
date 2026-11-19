@@ -4,6 +4,7 @@
 	import MaybeLink from '$lib/components/MaybeLink.svelte';
 	import SocialLinks from '$lib/components/SocialLinks.svelte';
 	import { hero, site } from '$lib/content/site';
+	import { hardwareWebGL } from '$lib/three/gpu';
 	import type { HeroScene } from '$lib/three/hero-scene';
 	import { fullScreen, wrap } from '$lib/ui';
 
@@ -16,6 +17,12 @@
 
 	onMount(() => {
 		hydrated = true;
+		// No GPU: keep the still skeleton (and no runway) rather than draw the cube on the CPU.
+		if (!hardwareWebGL()) {
+			scene3d = 'failed';
+			window.dispatchEvent(new Event('hero-ready'));
+			return;
+		}
 		let scene: HeroScene | undefined;
 		let explode: { kill(): void } | undefined;
 		let cancelled = false;
@@ -100,7 +107,7 @@
 	class={[
 		'relative overflow-clip border-b border-line-soft',
 		fullScreen,
-		scene3d !== 'failed' && 'three-on:h-[calc(165svh_-_var(--header-h))] three-on:justify-start'
+		scene3d !== 'failed' && 'three-on:h-[calc(165svh-var(--header-h))] three-on:justify-start'
 	]}
 	aria-labelledby="hero-name"
 	data-draft-group
@@ -109,7 +116,7 @@
 	data-draft-cursors="5"
 >
 	<div
-		class="flex min-h-[calc(100svh_-_var(--header-h))] flex-col justify-center three-on:sticky three-on:top-(--header-h)"
+		class="flex min-h-[calc(100svh-var(--header-h))] flex-col justify-center three-on:sticky three-on:top-(--header-h)"
 	>
 		<div
 			class="{wrap} flex flex-col pb-8 desk:flex-row desk:flex-wrap-reverse desk:items-center desk:gap-x-6 desk:gap-y-2 desk:pt-[clamp(20px,3vw,36px)] desk:pb-[clamp(36px,4.5vw,56px)]"

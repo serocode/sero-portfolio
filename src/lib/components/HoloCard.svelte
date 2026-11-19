@@ -23,7 +23,7 @@
 
 <div
 	data-cursor={site.name}
-	class="holo-tilt [--bg-x:50%] [--bg-y:50%] [--holo-o:0] [transform:perspective(1000px)_rotateX(0deg)_rotateY(0deg)] will-change-transform"
+	class="holo-tilt [--bg-x:50%] [--bg-y:50%] [--holo-o:0] transform-[perspective(1000px)_rotateX(0deg)_rotateY(0deg)] will-change-transform"
 	use:holoTilt={{ flipped }}
 >
 	<button
@@ -38,7 +38,7 @@
 		<span
 			class={[
 				'relative block aspect-[3/4.2] transform-3d [transition:transform_0.8s_cubic-bezier(0.3,0.7,0.2,1)] motion-reduce:transition-none',
-				flipped && '[transform:rotateY(180deg)]'
+				flipped && 'transform-[rotateY(180deg)]'
 			]}
 			aria-hidden="true"
 		>
@@ -53,6 +53,8 @@
 						<img
 							use:imageState
 							src={site.photo.src}
+							srcset={site.photo.srcset}
+							sizes="242px"
 							alt={site.photo.alt}
 							width={site.photo.width}
 							height={site.photo.height}
@@ -69,11 +71,11 @@
 						</span>
 					{/if}
 					<span
-						class="{pill} top-2.5 left-2.5 gap-[5px] bg-[color-mix(in_srgb,var(--color-surface)_92%,transparent)] tracking-[0.06em] text-ink"
+						class="{pill} top-2.5 left-2.5 gap-1.25 bg-[color-mix(in_srgb,var(--color-surface)_92%,transparent)] tracking-[0.06em] text-ink"
 						>{card.number}</span
 					>
 					<span
-						class="{pill} top-2.5 right-2.5 gap-[5px] bg-accent font-medium tracking-[0.06em] text-on-accent"
+						class="{pill} top-2.5 right-2.5 gap-1.25 bg-accent font-medium tracking-[0.06em] text-on-accent"
 					>
 						<Icon name="map-pin" size={11} strokeWidth={2.4} />{card.location}
 					</span>
@@ -90,14 +92,14 @@
 					<span class="font-mono text-[11px] leading-[1.4] text-muted">{card.strapline}</span>
 				</span>
 				<span
-					class="{sheen} opacity-[calc(0.22_+_0.5_*_var(--holo-o))] mix-blend-color-dodge"
+					class="{sheen} opacity-[calc(0.22+0.5*var(--holo-o))] mix-blend-color-dodge"
 					aria-hidden="true"
 				></span>
 				<span class={glare} aria-hidden="true"></span>
 			</span>
 
 			<span
-				class="{face} holo-back flex [transform:rotateY(180deg)] flex-col gap-[clamp(8px,4.6cqi,16px)] border border-inverse bg-[linear-gradient(160deg,var(--color-inverse),color-mix(in_srgb,var(--color-inverse)_85%,var(--color-inverse-line)))] px-[clamp(16px,8cqi,22px)] pt-[clamp(16px,8.5cqi,24px)] pb-[clamp(14px,7cqi,20px)] text-inverse-body shadow-[0_32px_64px_-32px_rgb(var(--shadow-rgb)/calc(0.5*var(--shadow-k)))]"
+				class="{face} holo-back flex transform-[rotateY(180deg)] flex-col gap-[clamp(8px,4.6cqi,16px)] border border-inverse bg-[linear-gradient(160deg,var(--color-inverse),color-mix(in_srgb,var(--color-inverse)_85%,var(--color-inverse-line)))] px-[clamp(16px,8cqi,22px)] pt-[clamp(16px,8.5cqi,24px)] pb-[clamp(14px,7cqi,20px)] text-inverse-body shadow-[0_32px_64px_-32px_rgb(var(--shadow-rgb)/calc(0.5*var(--shadow-k)))]"
 			>
 				<span class="flex flex-col">
 					{#each [
@@ -109,7 +111,7 @@
 						>
 							<span class={k}>{role.k}</span>
 							<span
-								class="text-[clamp(13px,5.8cqi,16px)] leading-[1.25] font-semibold text-on-inverse"
+								class="text-[clamp(13px,5.8cqi,16px)] leading-tight font-semibold text-on-inverse"
 								>{role.v}</span
 							>
 						</span>
@@ -141,12 +143,12 @@
 					{/each}
 				</span>
 				<span
-					class="mt-auto inline-flex items-center gap-[5px] font-mono text-[11px] leading-[1.4] text-inverse-accent"
+					class="mt-auto inline-flex items-center gap-1.25 font-mono text-[11px] leading-[1.4] text-inverse-accent"
 				>
 					<Icon name="rotate" size={13} strokeWidth={2} />Flip back
 				</span>
 				<span
-					class="{sheen} opacity-[calc(0.06_+_0.16_*_var(--holo-o))] mix-blend-screen"
+					class="{sheen} opacity-[calc(0.06+0.16*var(--holo-o))] mix-blend-screen"
 					aria-hidden="true"
 				></span>
 				<span class={glare} aria-hidden="true"></span>

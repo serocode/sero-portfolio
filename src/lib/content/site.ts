@@ -18,10 +18,12 @@ export const site = {
 	visitors: { one: 'visitor', other: 'visitors' },
 	photo: {
 		src: '/images/anthony.webp',
+		srcset:
+			'/images/anthony-384.webp 384w, /images/anthony-512.webp 512w, /images/anthony.webp 768w',
 		width: 768,
 		height: 1024,
 		alt: 'Anthony Serojales on a beach in sunglasses, smiling and giving a thumbs-up'
-	} as { src: string; width: number; height: number; alt: string } | null
+	} as { src: string; srcset?: string; width: number; height: number; alt: string } | null
 };
 
 export const hero = {

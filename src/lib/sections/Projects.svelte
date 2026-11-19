@@ -7,6 +7,7 @@
 	import { projectsSection as copy, projects } from '$lib/content/projects';
 	import { HeightTween, swap } from '$lib/motion';
 	import type { HelixMotion } from '$lib/motion/helix-motion';
+	import { hardwareWebGL } from '$lib/three/gpu';
 	import type { HelixScene } from '$lib/three/helix-scene';
 	import { btnGhostHover, btnPrimaryHover, textLink } from '$lib/ui';
 	import { pad2, spellCap } from '$lib/utils/format';
@@ -80,7 +81,7 @@
 	}
 
 	onMount(() => {
-		if (document.documentElement.dataset.three !== 'on' || !track) return;
+		if (document.documentElement.dataset.three !== 'on' || !track || !hardwareWebGL()) return;
 		let cancelled = false;
 		let scene: HelixScene | undefined;
 		let ro: ResizeObserver | undefined;
@@ -183,11 +184,11 @@
 	{#if scene3d !== 'failed'}
 		<!-- The track is the scroll length; the stage pins under the header while it passes. -->
 		<div
-			class="hidden h-[calc(100svh_-_var(--header-h)_+_var(--steps)_*_62svh)] three-on:block"
+			class="hidden h-[calc(100svh-var(--header-h)+var(--steps)*62svh)] three-on:block"
 			style:--steps={total - 1}
 			bind:this={track}
 		>
-			<div class="sticky top-(--header-h) h-[calc(100svh_-_var(--header-h))]" bind:this={stage}>
+			<div class="sticky top-(--header-h) h-[calc(100svh-var(--header-h))]" bind:this={stage}>
 				<span
 					class="pointer-events-none absolute inset-x-0 top-0 bottom-[40%] grid place-items-center transition-opacity duration-500 ease-[ease] data-[state=ready]:opacity-0"
 					data-state={scene3d}
@@ -195,7 +196,7 @@
 					aria-hidden="true"
 					><span
 						class={[
-							'aspect-[16/11] h-[62%] max-w-full rounded-[22px] bg-[radial-gradient(var(--scene-base)_1.2px,transparent_1.6px)] bg-size-[11px_11px] opacity-50 mask-[radial-gradient(closest-side,#000_70%,transparent_100%)]',
+							'aspect-16/11 h-[62%] max-w-full rounded-[22px] bg-[radial-gradient(var(--scene-base)_1.2px,transparent_1.6px)] bg-size-[11px_11px] opacity-50 mask-[radial-gradient(closest-side,#000_70%,transparent_100%)]',
 							scene3d === 'loading' && 'animate-orb-pulse motion-reduce:animate-none'
 						]}
 					></span></span
@@ -237,10 +238,10 @@
 									>
 										<!-- Fills with the position, so the strip shows progress between projects too. -->
 										<span
-											class="relative h-0.5 w-full overflow-hidden rounded-full bg-line-strong transition-[background-color,height] duration-300 ease-smooth group-hover:bg-faint group-aria-[current=true]:h-1"
+											class="relative h-0.5 w-full overflow-hidden rounded-full bg-line-strong transition-[background-color,height] duration-300 ease-smooth group-hover:bg-faint group-aria-current:h-1"
 										>
 											<span
-												class="absolute inset-0 origin-left rounded-full bg-accent/45 transition-colors duration-300 group-aria-[current=true]:bg-accent"
+												class="absolute inset-0 origin-left rounded-full bg-accent/45 transition-colors duration-300 group-aria-current:bg-accent"
 												style:scale="clamp(0, calc(var(--hx-pos) - {i} + 1), 1) 1"
 											></span>
 										</span>
@@ -249,7 +250,7 @@
 							{/each}
 						</ol>
 						<p
-							class="hidden flex-none font-mono text-[11px] tracking-[0.08em] text-muted uppercase [@media(pointer:fine)]:desk:block"
+							class="hidden flex-none font-mono text-[11px] tracking-[0.08em] text-muted uppercase pointer-fine:desk:block"
 						>
 							{copy.hint}
 						</p>
@@ -275,7 +276,7 @@
 						</div>
 					</div>
 
-					<div class="grid items-start [&>*]:[grid-area:1/1]" bind:this={detail}>
+					<div class="grid items-start *:[grid-area:1/1]" bind:this={detail}>
 						{#key focus}
 							<div
 								class="grid min-w-0 items-start gap-x-12 gap-y-3 desk:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"
@@ -318,7 +319,7 @@
 										{project.description}
 									</p>
 									<ul
-										class="flex flex-wrap gap-1.5 font-mono text-[11px] text-strong max-desk:max-h-[52px] max-desk:overflow-hidden desk:gap-2 desk:text-[12px]"
+										class="flex flex-wrap gap-1.5 font-mono text-[11px] text-strong max-desk:max-h-13 max-desk:overflow-hidden desk:gap-2 desk:text-[12px]"
 										aria-label="Tech stack"
 									>
 										{#each project.stack as t (t)}
@@ -332,7 +333,7 @@
 												target="_blank"
 												rel="noopener noreferrer"
 												class={[
-													'inline-flex min-h-11 items-center gap-2 rounded-full px-[18px] text-[14px] font-medium',
+													'inline-flex min-h-11 items-center gap-2 rounded-full px-4.5 text-[14px] font-medium',
 													l.variant === 'primary'
 														? ['bg-inverse text-on-inverse', btnPrimaryHover]
 														: ['border border-line-strong bg-surface text-strong', btnGhostHover]
@@ -369,7 +370,7 @@
 	{/if}
 
 	<div
-		class={['flex flex-col gap-[72px] max-desk:gap-6', scene3d !== 'failed' && 'three-on:hidden']}
+		class={['flex flex-col gap-18 max-desk:gap-6', scene3d !== 'failed' && 'three-on:hidden']}
 		use:deckScroll
 	>
 		{#each projects as p, i (p.id)}
@@ -394,7 +395,7 @@
 <!-- Full project (views, screenshots, highlights) — opened from the helix. -->
 <dialog
 	bind:this={dialog}
-	class="m-auto max-h-[calc(100svh_-_24px)] w-[min(1180px,calc(100vw_-_24px))] translate-y-3 overflow-y-auto overscroll-contain bg-transparent p-0 opacity-0 transition-[opacity,translate,display,overlay] transition-discrete duration-300 ease-smooth backdrop:bg-transparent backdrop:transition-[background-color,display,overlay] backdrop:transition-discrete backdrop:duration-300 open:translate-y-0 open:opacity-100 open:backdrop:bg-[rgb(var(--shadow-rgb)/0.55)] starting:open:translate-y-3 starting:open:opacity-0 starting:open:backdrop:bg-transparent"
+	class="m-auto max-h-[calc(100svh-24px)] w-[min(1180px,calc(100vw-24px))] translate-y-3 overflow-y-auto overscroll-contain bg-transparent p-0 opacity-0 transition-[opacity,translate,display,overlay] transition-discrete duration-300 ease-smooth backdrop:bg-transparent backdrop:transition-[background-color,display,overlay] backdrop:transition-discrete backdrop:duration-300 open:translate-y-0 open:opacity-100 open:backdrop:bg-[rgb(var(--shadow-rgb)/0.55)] starting:open:translate-y-3 starting:open:opacity-0 starting:open:backdrop:bg-transparent"
 	aria-labelledby={openIdx !== null ? `dlg-${projects[openIdx].id}-title` : undefined}
 	onclose={onDialogClose}
 >
@@ -402,7 +403,7 @@
 		<div class="sticky top-0 z-10 flex justify-end pb-2">
 			<button
 				type="button"
-				class="grid size-11 place-items-center rounded-full border border-line-strong bg-surface text-strong shadow-[0_8px_24px_-12px_rgb(var(--shadow-rgb)/calc(0.4*var(--shadow-k)))] transition-[border-color,color] duration-[180ms] hover:border-ink hover:text-ink"
+				class="grid size-11 place-items-center rounded-full border border-line-strong bg-surface text-strong shadow-[0_8px_24px_-12px_rgb(var(--shadow-rgb)/calc(0.4*var(--shadow-k)))] transition-[border-color,color] duration-180 hover:border-ink hover:text-ink"
 				aria-label={copy.close}
 				onclick={() => dialog?.close()}
 			>
