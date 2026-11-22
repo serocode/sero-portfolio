@@ -66,6 +66,7 @@ pnpm dev            # http://localhost:5173
 | `pnpm lint` / `pnpm format`   | Biome lint + format check / apply formatting                               |
 | `pnpm test`                   | Playwright smoke + accessibility tests on desktop and phone (builds first) |
 | `pnpm og`                     | Re-render the social preview image, `static/og-image.png`                  |
+| `pnpm shots`                  | Re-capture `docs/screenshots/` (needs `pnpm preview --port 4173` running)  |
 
 ## Editing content
 

@@ -110,4 +110,5 @@ rather than redesigning.
 
 - `pnpm dev` · `pnpm check` (svelte-check) · `pnpm build && pnpm preview`
 - `pnpm lint` (Biome: lint + format check) · `pnpm format` (Biome, writes fixes) — no Prettier/ESLint
-- `pnpm test` (Playwright smoke + axe; builds and serves on :4173) · `pnpm og` (re-render `static/og-image.png`)
+- `pnpm test` (Playwright smoke + axe; builds and serves on :4173) · `pnpm og` (re-render `static/og-image.png`) · `pnpm shots` (re-capture
+  `docs/screenshots/` from a build served on :4173)
