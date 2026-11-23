@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import Logo from '$lib/brand/Logo.svelte';
 	import { site } from '$lib/content/site';
 	import { wrap } from '$lib/ui';
@@ -8,20 +7,6 @@
 	import SocialLinks from './SocialLinks.svelte';
 
 	const year = new Date().getFullYear();
-
-	// Total visitors from Vercel Web Analytics (/api/visitors); stays hidden until it arrives or if it fails.
-	let visitors = $state<number | null>(null);
-
-	onMount(() => {
-		const controller = new AbortController();
-		fetch('/api/visitors', { signal: controller.signal })
-			.then((res) => (res.ok ? res.json() : null))
-			.then((body: { visitors?: unknown } | null) => {
-				if (typeof body?.visitors === 'number') visitors = body.visitors;
-			})
-			.catch(() => {});
-		return () => controller.abort();
-	});
 
 	let launching = $state(false);
 	let launchTimer = 0;
@@ -59,18 +44,7 @@
 			data-draft-text
 		>
 			<Logo size={24} decorative />
-			<span
-				>{site.name}
-				· ©
-				{year}
-				{#if visitors !== null}
-					<span class="animate-fade-in motion-reduce:animate-none">
-						·
-						<span class="font-mono text-[12px] tabular-nums">{visitors.toLocaleString('en')}</span>
-						{visitors === 1 ? site.visitors.one : site.visitors.other}</span
-					>
-				{/if}</span
-			>
+			<span>{site.name} · © {year}</span>
 		</p>
 		<div
 			class="flex flex-wrap items-center gap-1 max-desk:flex-col max-desk:justify-center max-desk:gap-3"

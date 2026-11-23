@@ -15,7 +15,6 @@ export const site = {
 		cta: 'Support me on Ko-fi',
 		comingSoon: 'Ko-fi link coming soon'
 	},
-	visitors: { one: 'visitor', other: 'visitors' },
 	photo: {
 		src: '/images/anthony.webp',
 		srcset:

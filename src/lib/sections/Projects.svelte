@@ -5,6 +5,7 @@
 	import ProjectCard from '$lib/components/ProjectCard.svelte';
 	import Section from '$lib/components/Section.svelte';
 	import { projectsSection as copy, projects } from '$lib/content/projects';
+	import { projectColumns } from '$lib/content/skills';
 	import { HeightTween, swap } from '$lib/motion';
 	import type { HelixMotion } from '$lib/motion/helix-motion';
 	import { hardwareWebGL } from '$lib/three/gpu';
@@ -38,6 +39,8 @@
 	let motion: HelixMotion | undefined;
 
 	const project = $derived(projects[focus]);
+	// The same short names the Skills matrix uses for its columns.
+	const shortTitle = (p: (typeof projects)[number]) => projectColumns[p.id]?.short ?? p.title;
 	const isGithub = (href: string) => /^https?:\/\/(www\.)?github\.com\//.test(href);
 
 	// Details swap: direction-aware slide + smooth height, like the other swapping panels.
@@ -221,8 +224,9 @@
 							<span class="text-[15px] font-medium text-accent-700">{pad2(focus + 1)}</span>
 							/ {pad2(total)}
 						</p>
+						<!-- Ticks jump to a project; each names it once the strip is wide enough to read. -->
 						<ol
-							class="flex min-w-0 flex-1 items-center"
+							class="@container flex min-w-0 flex-1 items-center"
 							aria-label={copy.listLabel}
 							bind:this={ticks}
 							style="--hx-pos: 0"
@@ -231,7 +235,7 @@
 								<li class="min-w-0 flex-1">
 									<button
 										type="button"
-										class="group flex h-11 w-full items-center px-0.5"
+										class="group relative flex h-11 w-full items-center px-0.5"
 										aria-label={copy.goTo(p.title)}
 										aria-current={i === focus ? 'true' : undefined}
 										onclick={() => motion?.go(i)}
@@ -245,6 +249,10 @@
 												style:scale="clamp(0, calc(var(--hx-pos) - {i} + 1), 1) 1"
 											></span>
 										</span>
+										<span
+											class="absolute inset-x-0.5 top-[calc(50%+7px)] hidden truncate text-left font-mono text-[11px] leading-none tracking-[0.04em] text-muted transition-colors duration-300 group-hover:text-strong group-aria-current:text-accent-700 @min-[34rem]:block"
+											>{shortTitle(p)}</span
+										>
 									</button>
 								</li>
 							{/each}

@@ -17,6 +17,11 @@ const fakeGpu = () => {
 test.beforeEach(async ({ context }) => {
 	await context.addInitScript(skipIntro);
 	await context.addInitScript(fakeGpu);
+	// Vercel serves its Analytics / Speed Insights scripts only on its own hosting; the local
+	// preview 404s them, which would show up as console errors. Stub them with empty scripts.
+	await context.route('**/_vercel/**', (route) =>
+		route.fulfill({ status: 200, contentType: 'text/javascript', body: '' })
+	);
 });
 
 function trackErrors(page: Page) {
