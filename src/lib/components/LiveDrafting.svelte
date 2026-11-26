@@ -29,6 +29,27 @@
 		});
 	}
 
+	// Resolves on the visitor's first input. The header and hero runs are decoration over content
+	// that's already there, so they wait for someone to engage instead of redrawing the page while it
+	// is still settling (which cost ~2.7s of mobile Speed Index). Setup itself still happens at load:
+	// its global ScrollTrigger refresh would cancel a smooth scroll in flight if it ran later.
+	function firstInteraction(cleanups: (() => void)[]) {
+		// No 'scroll': a restored or scripted scroll isn't engagement, and every real scroll starts with
+		// one of these (touch, wheel, scrollbar pointerdown, keys).
+		const events = ['pointermove', 'pointerdown', 'touchstart', 'wheel', 'keydown'];
+		return new Promise<void>((resolve) => {
+			const go = () => {
+				off();
+				resolve();
+			};
+			const off = () => {
+				for (const e of events) window.removeEventListener(e, go);
+			};
+			for (const e of events) window.addEventListener(e, go, { once: true, passive: true });
+			cleanups.push(off);
+		});
+	}
+
 	onMount(() => {
 		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 		let fx: LiveDrafting | undefined;
@@ -36,6 +57,8 @@
 		const cleanups: (() => void)[] = [];
 		const root = document.documentElement;
 		const fromComet = () => (comet.ready ? { x: comet.x, y: comet.y } : null);
+
+		const engaged = firstInteraction(cleanups);
 
 		(async () => {
 			const [{ gsap }, { ScrollTrigger }, { createLiveDrafting }, hadLoader] = await Promise.all([
@@ -72,7 +95,10 @@
 					origin: d.draftOrigin === 'comet' ? fromComet : undefined
 				};
 				if (d.draftAutoplay !== undefined) {
-					g.autoplay = { delay: Number(d.draftAutoplay || 0) + (hadLoader ? loaderDelay : 0) };
+					g.autoplay = {
+						delay: Number(d.draftAutoplay || 0) + (hadLoader ? loaderDelay : 0),
+						after: engaged
+					};
 				}
 				const deck = node.parentElement;
 				if (d.draftCard !== undefined && deck) {

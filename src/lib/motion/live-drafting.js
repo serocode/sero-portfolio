@@ -55,6 +55,7 @@ export function createLiveDrafting(o) {
 	const groups = [],
 		triggers = [],
 		calls = [];
+	let destroyed = false;
 	let frame = 0;
 	(o.groups || []).forEach((cfg) => {
 		const node = cfg.node || (cfg.id ? document.getElementById(cfg.id) : null);
@@ -219,11 +220,17 @@ export function createLiveDrafting(o) {
 			G.cursors.push(C);
 		}
 		if (cfg.autoplay) {
-			calls.push(
-				gsap.delayedCall(cfg.autoplay.delay || 0, () => {
-					start(G);
-				})
-			);
+			const play = () => {
+				if (destroyed) return;
+				calls.push(
+					gsap.delayedCall(cfg.autoplay.delay || 0, () => {
+						start(G);
+					})
+				);
+			};
+			// `after`: the delay counts from when this resolves (e.g. the visitor's first input).
+			if (cfg.autoplay.after) cfg.autoplay.after.then(play);
+			else play();
 		} else {
 			triggers.push(
 				ST.create({
@@ -818,6 +825,7 @@ export function createLiveDrafting(o) {
 			ST.refresh();
 		},
 		destroy: () => {
+			destroyed = true;
 			gsap.ticker.remove(tick);
 			window.removeEventListener('scroll', onScroll);
 			ST.removeEventListener('refreshInit', onRefreshInit);

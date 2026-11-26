@@ -76,7 +76,10 @@ rather than redesigning.
      no text-on-text) in a one-cell grid plus `HeightTween` so containers resize smoothly; sections
      arrive with `use:reveal` + `revealItem` (src/lib/ui.ts).
      Live drafting (`LiveDrafting.svelte` + `src/lib/motion/live-drafting.js`, GSAP lazy-loaded, off
-     with reduced motion): regions carry `data-draft-group`, elements `data-draft="Label"` (+
+     with reduced motion; set up at load, but the autoplaying header/hero runs wait for the first
+     pointer/touch/wheel/key input — redrawing the hero while the page settled kept mobile
+     Speed Index at ~4.7s; don't defer the setup itself, its ScrollTrigger refresh cancels smooth
+     scrolls): regions carry `data-draft-group`, elements `data-draft="Label"` (+
      `data-draft-text` / `data-draft-fit`) — mark new UI the same way. Its overlay is clipped to
      `<body>`, which therefore stays `relative`. Dispatch `layout-settled` on `window` after
      animated layout changes so it re-measures (`HeightTween` already does).

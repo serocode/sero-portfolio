@@ -16,7 +16,8 @@ export interface DraftGroup {
 	targets: DraftTarget[];
 	cursors?: number;
 	origin?: () => { x: number; y: number } | null;
-	autoplay?: { delay?: number };
+	/** Play on its own after `delay` seconds, counted from when `after` resolves (if given). */
+	autoplay?: { delay?: number; after?: Promise<void> };
 	start?: string;
 	local?: boolean;
 	range?: () => { start: number };
